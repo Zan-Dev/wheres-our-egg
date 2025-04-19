@@ -25,16 +25,16 @@ function update() {
     }
 }
   
-function draw() {
+function draw(timestamp) {    
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     switch (gameState) {
       case "menu": mainMenu(ctx); break;   
-      case "character": characterSelect(ctx); break;
+      case "character": characterSelect(ctx, timestamp); break;
     }
 }
   
-export function gameLoop() {
+export function gameLoop(timestamp) {
     update();
-    draw();
+    draw(timestamp);
     requestAnimationFrame(gameLoop);
 }

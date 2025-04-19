@@ -2,42 +2,95 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Teks Berdenyut di Canvas</title>
+  <title>Sprite Animation</title>
   <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #111;
+      overflow: hidden;
+    }
+
     canvas {
       display: block;
-      margin: auto;
+      margin: 0 auto;
       background: #222;
     }
   </style>
 </head>
 <body>
-  <canvas id="canvas" width="600" height="300"></canvas>
+  <canvas id="gameCanvas"></canvas>
 
   <script>
-    const canvas = document.getElementById("canvas");
-    const ctx = canvas.getContext("2d");
+    class Sprite {
+      constructor(image, frameWidth, frameHeight, frameCount, frameSpeed) {
+        this.image = image;
+        this.frameWidth = frameWidth;
+        this.frameHeight = frameHeight;        
+        this.frameCount = frameCount;
+        this.frameSpeed = frameSpeed;        
 
-    let time = 0;
+        this.currentFrame = 0;
+        this.frameTimer = 0;
+        this.x = 100;
+        this.y = 100;
+      }
 
-    function animate() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      update(deltaTime) {
+        this.frameTimer += deltaTime;
+        if (this.frameTimer >= this.frameSpeed) {
+          this.currentFrame = (this.currentFrame + 1) % this.frameCount;
+          this.frameTimer = 0;
+        }
+      }
 
-      // Buat ukuran teks berdenyut berdasarkan sin
-      const scale = 1 + Math.sin(time) * 0.1; // 1 = normal, 0.1 = amplitudo denyut
-      const fontSize = 50 * scale;
-
-      ctx.font = `${fontSize}px Arial`;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillStyle = "#00FFAA";
-      ctx.fillText("Teks Berdenyut", canvas.width / 2, canvas.height / 2);
-
-      time += 0.05; // mengatur kecepatan denyutan
-      requestAnimationFrame(animate);
+      draw(ctx) {
+        ctx.drawImage(
+          this.image,
+          this.currentFrame * this.frameWidth,
+          0,
+          this.frameWidth,
+          this.frameHeight,
+          this.x,
+          this.y,
+          this.frameWidth,
+          this.frameHeight
+        );
+      }
     }
 
-    animate();
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const spriteImage = new Image();
+    spriteImage.src = "assets/images/test.png"; // path dari file upload kamu
+
+    let character;
+
+    spriteImage.onload = () => {
+      character = new Sprite(spriteImage, 170, 210, 6, 100); // 6 frame, tiap frame 85px, kecepatan 100ms/frame
+      lastTime = performance.now();
+      requestAnimationFrame(gameLoop);
+    };
+
+    let lastTime = 0;
+
+    function gameLoop(time) {
+      const deltaTime = time - lastTime;
+      lastTime = time;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      if (character) {
+        character.update(deltaTime);
+        character.draw(ctx);
+      }
+
+      requestAnimationFrame(gameLoop);
+    }
   </script>
 </body>
 </html>

@@ -1,9 +1,13 @@
 import { setGameState } from "./game.js";
 import { getSkins } from "./component.js";
+import { gameLoop } from "./game.js";
+
+let lastTime = 0;
 
 let time = 0;
 let buttonNext = new Image();
-const skins = getSkins();
+const skins = getSkins(); //TEST
+
 buttonNext.src = "assets/images/button-next.png"
 const buttonNextRect = {
     x: 0,
@@ -43,7 +47,9 @@ export function updateMainMenu() {
       }
 }
 
-export function characterSelect(ctx){
+export function characterSelect(ctx, timestamp){
+    const deltaTime = timestamp - lastTime;
+    lastTime = timestamp;    
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
     ctx.fillStyle = "#041423";
@@ -52,16 +58,18 @@ export function characterSelect(ctx){
     ctx.fillStyle = "#ffffff";
     ctx.font = "25px 'Press Start 2P'";
     ctx.fillText("CHOOSE YOUR SKIN", ctx.canvas.width / 2, 100);
-   
-    skins.forEach((skin, index) => {
-        ctx.drawImage(skin.image, 100 + index * 300, 150, 100, 100);
-        ctx.fillText(skin.name, 100 + index * 300, 270);
-    });
+    
+    skins.forEach(char => {
+      ctx.imageSmoothingEnabled = false;      
+      char.update(deltaTime);      
+      char.draw(ctx);
+      ctx.fillText(char.name, char.x + 100, char.y + 10);         
+    });  
 
+    // BUTTON
     buttonNextRect.x = ctx.canvas.width / 2 - 50;
     buttonNextRect.y = 540;
-
-    ctx.drawImage(buttonNext, buttonNextRect.x, buttonNextRect.y, buttonNextRect.width, buttonNextRect.height);
+    ctx.drawImage(buttonNext, buttonNextRect.x, buttonNextRect.y, buttonNextRect.width, buttonNextRect.height);    
 }
 
 let isHover = false;
@@ -72,8 +80,10 @@ export function updateCharacter(ctx, canvas){
           if (e.code === "Space") {
             // setGameState("character");
             console.log("Select Level");
+            const deltaTime = 16.67;
+            skins.forEach(char => char.update(deltaTime));
           }
-        }, { once: true });
+        });
         charHandled = true;
     }
 
