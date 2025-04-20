@@ -2,95 +2,175 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Sprite Animation</title>
+  <title>Skin Carousel Demo</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
     html, body {
       margin: 0;
       padding: 0;
-      background: #111;
       overflow: hidden;
+      background: #041423;
+      font-family: 'Press Start 2P', cursive;
+      color: white;
     }
-
     canvas {
       display: block;
-      margin: 0 auto;
-      background: #222;
+      background: #041423;
     }
   </style>
 </head>
 <body>
   <canvas id="gameCanvas"></canvas>
-
   <script>
-    class Sprite {
-      constructor(image, frameWidth, frameHeight, frameCount, frameSpeed) {
-        this.image = image;
+    class Skin {
+      constructor(name, src, frameWidth, frameHeight, scaleWidth, scaleHeight, frameCount, frameInterval) {
+        this.name = name;
+        this.image = new Image();
+        this.image.src = src;
         this.frameWidth = frameWidth;
-        this.frameHeight = frameHeight;        
+        this.frameHeight = frameHeight;
+        this.scaleWidth = scaleWidth;
+        this.scaleHeight = scaleHeight;
         this.frameCount = frameCount;
-        this.frameSpeed = frameSpeed;        
-
-        this.currentFrame = 0;
+        this.frameIndex = 0;
         this.frameTimer = 0;
-        this.x = 100;
-        this.y = 100;
+        this.frameInterval = frameInterval;
       }
-
       update(deltaTime) {
         this.frameTimer += deltaTime;
-        if (this.frameTimer >= this.frameSpeed) {
-          this.currentFrame = (this.currentFrame + 1) % this.frameCount;
+        if (this.frameTimer >= this.frameInterval) {
           this.frameTimer = 0;
+          this.frameIndex = (this.frameIndex + 1) % this.frameCount;
         }
       }
-
-      draw(ctx) {
-        ctx.drawImage(
-          this.image,
-          this.currentFrame * this.frameWidth,
-          0,
-          this.frameWidth,
-          this.frameHeight,
-          this.x,
-          this.y,
-          this.frameWidth,
-          this.frameHeight
-        );
-      }
     }
+
+    // daftar skin (path ke sprite sheet harus sesuai)
+    const skins = [
+      new Skin("Vita",   "assets/images/vita/idle.png",  24, 24, 200, 200, 3, 100),
+      new Skin("Mono",   "assets/images/mono/idle.png",  24, 24, 200, 200, 3, 100),
+      new Skin("Hatchy","assets/images/mono/idle2.png", 24, 24, 200, 200, 3, 100)
+    ];
+
+    let activeIndex = 0;
+    let isAnimating = false;
+    let animationDir = null;    // "left" or "right"
+    let animStart = 0;
+    const animDur = 300;        // ms
 
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
-
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
+////////////////////////////////////////////////////////////////////////////////////////////
+    // pindah ke skin berikutnya
+    function triggerNext() {
+      if (!isAnimating) {
+        isAnimating = true;
+        animationDir = "left";
+        animStart = performance.now();
+      }
+    }
+    // pindah ke skin sebelumnya
+    function triggerPrev() {
+      if (!isAnimating) {
+        isAnimating = true;
+        animationDir = "right";
+        animStart = performance.now();
+      }
+    }
 
-    const spriteImage = new Image();
-    spriteImage.src = "assets/images/test.png"; // path dari file upload kamu
+    window.addEventListener("keydown", e => {
+      if (e.code === "KeyD" || e.code === "ArrowRight") triggerNext();
+      if (e.code === "KeyA" || e.code === "ArrowLeft")  triggerPrev();
+    });
 
-    let character;
+    function drawCarousel(ts) {
+      const cw = canvas.width, ch = canvas.height;
+      const centerX = cw / 2, centerY = ch / 2;
+      const offsetX = 200;
 
-    spriteImage.onload = () => {
-      character = new Sprite(spriteImage, 170, 210, 6, 100); // 6 frame, tiap frame 85px, kecepatan 100ms/frame
-      lastTime = performance.now();
-      requestAnimationFrame(gameLoop);
-    };
-
-    let lastTime = 0;
-
-    function gameLoop(time) {
-      const deltaTime = time - lastTime;
-      lastTime = time;
-
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      if (character) {
-        character.update(deltaTime);
-        character.draw(ctx);
+      // hitung frame delta
+      let prog = 0;
+      if (isAnimating) {
+        const elapsed = ts - animStart;
+        prog = Math.min(elapsed / animDur, 1);
+        if (prog === 1) {
+          isAnimating = false;
+          if (animationDir === "left")  activeIndex = (activeIndex + 1) % skins.length;
+          if (animationDir === "right") activeIndex = (activeIndex - 1 + skins.length) % skins.length;
+        }
       }
 
-      requestAnimationFrame(gameLoop);
+      const nextI = (activeIndex - 1 + skins.length) % skins.length;
+      const prevI = (activeIndex + 1) % skins.length;
+
+      // helper interpolasi
+      const lerp = (a, b) => a + (b - a) * prog;
+
+      // tentukan posisi & skala masing-masing
+      let prevX = centerX - offsetX,
+          currX = centerX,
+          nextX = centerX + offsetX;
+      let prevS = 0.6, currS = 1, nextS = 0.6;
+
+      if (isAnimating) {
+        if (animationDir === "left") {
+          prevX = lerp(centerX - offsetX, centerX);
+          currX = lerp(centerX, centerX + offsetX);
+          nextX = lerp(centerX + offsetX, centerX + 3 * offsetX - 350);
+          prevS = lerp(0.6, 1);
+          currS = lerp(1, 0.6);
+        } else {
+          prevX = lerp(centerX - offsetX, centerX - 3 * offsetX + 350);
+          currX = lerp(centerX, centerX - offsetX);
+          nextX = lerp(centerX + offsetX, centerX);
+          nextS = lerp(0.6, 1);
+          currS = lerp(1, 0.6);
+        }
+      }
+
+      // update frame animasi tiap skin///////////////////
+      const delta = isAnimating ? 16.67 : 16.67;
+      skins[prevI].update(delta);
+      skins[activeIndex].update(delta);
+      skins[nextI].update(delta);
+///////////////////////////////////
+
+      // fungsi gambar satu skin
+      function drawSkin(skin, x, scale, opacity) {
+        ctx.save();
+        ctx.globalAlpha = opacity;
+        ctx.imageSmoothingEnabled = false;
+        const w = skin.scaleWidth * scale,
+              h = skin.scaleHeight * scale;
+        const drawX = x - w / 2,
+              drawY = centerY - h / 2;
+        // ambil frame sprite
+        ctx.drawImage(
+          skin.image,
+          skin.frameIndex * skin.frameWidth, 0,
+          skin.frameWidth, skin.frameHeight,
+          drawX, drawY,
+          w, h
+        );
+        ctx.restore();
+      }
+
+      // clear & background
+      ctx.clearRect(0, 0, cw, ch);
+
+      // gambar prev / curr / next
+      drawSkin(skins[prevI], prevX, prevS, 0.3);
+      drawSkin(skins[activeIndex], currX, currS, 1);
+      drawSkin(skins[nextI], nextX, nextS, 0.3);
     }
+
+    function loop(ts) {
+      drawCarousel(ts);
+      requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
   </script>
 </body>
 </html>
