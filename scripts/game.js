@@ -1,6 +1,7 @@
 import {   
             mainMenu, updateMainMenu, 
-            characterSelect, updateCharacter 
+            characterSelect, updateCharacter,
+            levelSelect, updateLevel
 
         } from "./ui.js";
 
@@ -22,6 +23,7 @@ function update() {
     switch (gameState) {
       case "menu": updateMainMenu(); break;   
       case "character": updateCharacter(ctx, canvas); break;
+      case "level": updateLevel(); break;
     }
 }
   
@@ -30,6 +32,7 @@ function draw(timestamp) {
     switch (gameState) {
       case "menu": mainMenu(ctx); break;   
       case "character": characterSelect(ctx, timestamp); break;
+      case "level": levelSelect(ctx); break;
     }
 }
   

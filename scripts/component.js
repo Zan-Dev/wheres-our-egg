@@ -27,9 +27,7 @@ export class Skins {
     
     draw(ctx) {
         if (this.flip) {
-            ctx.save();
-            ctx.translate(this.x + this.scaleWidth, this.y);
-            ctx.scale(-1, 1);
+            ctx.save();            
             ctx.drawImage(
                 this.image,
                 this.frameIndex * this.frameWidth,
@@ -62,6 +60,10 @@ export const players = [
     {
         name: "player1",
         index: 0,
+        animating: false,
+        animationDir: null,
+        animStart: 0,
+        x: 300,
         skins: [
             // 1:name, 2:src, 3:x, 4:y, 5:frameWidth, 6:frameHeight, 7:scaleWidth, 8:scaleHeight 8:frame, 9:100ms/frame, 10:flip            
             new Skins("mono", "assets/images/mono/idle.png", 200, 200, 24, 24, 200, 200, 3, 100, false),    
@@ -71,6 +73,10 @@ export const players = [
     {
         name: "player2",
         index: 0,
+        animating: false,
+        animationDir: null,
+        animStart: 0,
+        x: 1000,
         skins: [
             // 1:name, 2:src, 3:x, 4:y, 5:frameWidth, 6:frameHeight, 7:scaleWidth, 8:scaleHeight 8:frame, 9:100ms/frame, 10:flip
             new Skins("vita", "assets/images/vita/idle.png", 900, 200, 24, 24, 200, 200, 3, 100, true),             
@@ -79,9 +85,6 @@ export const players = [
     }
 ]
     
-// export function getSkins() {
-//     return skins;
-// }
 
 
 export class Buttons{
