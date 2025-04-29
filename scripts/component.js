@@ -56,7 +56,7 @@ export class Skins {
     }
 }
 
-export const players = [
+export const playerSkin = [
     {
         name: "player1",
         index: 0,
@@ -83,12 +83,10 @@ export const players = [
             new Skins("vita", "assets/images/vita/idle2.png", 900, 200, 24, 24, 200, 200, 3, 100, true),   
         ]   
     }
-]
-    
-
+]  
 
 export class Buttons{
-    constructor(imageSrc, x, y, width, height, scale, onClick=null){
+    constructor(imageSrc, x, y, width, height, scale, onClick=null, active = null){
         this.image = new Image();
         this.image.src = imageSrc;
         this.x = x;
@@ -99,6 +97,7 @@ export class Buttons{
 
         this.hovered = false;
         this.clicked = false;
+        this.active = active;
 
         this.onClick = onClick;                
     }
@@ -113,47 +112,69 @@ export class Buttons{
     }
 
     update(mouseX, mouseY, isMouseDown) {
+        if (!this.active) {
+            this.hovered = false;
+            this.clicked = false;
+            return;
+        }
+
         this.hovered = this.isMouseOver(mouseX, mouseY);
         this.clicked = this.hovered && isMouseDown;
 
         if (this.clicked && this.onClick) {
-            this.onClick();
+            // console.log("Clicked");
         }
     }
 
     draw(ctx) {
         ctx.save();
 
-        // Efek visual saat hover
+        let scaleFactor = this.hovered ? this.scale * 1.2 : this.scale;
+        
         if (this.hovered) {
             ctx.globalAlpha = 0.9;
             ctx.shadowColor = 'yellow';
-            ctx.shadowBlur = 15;
+            ctx.shadowBlur = 15;            
         }
-
-        // Efek klik bisa dibuat juga di sini jika perlu
+     
 
         ctx.drawImage(
             this.image,
-            this.x,
-            this.y,
-            this.width * this.scale,
-            this.height * this.scale
+            this.x - (this.width * (scaleFactor - this.scale)) / 2,
+            this.y - (this.height * (scaleFactor - this.scale)) / 2,
+            this.width * scaleFactor,
+            this.height * scaleFactor
         );
 
         ctx.restore();
     }
 }
 
-const buttons = {
-    // 1:src, 2:x, 3:y, 4:scale, 5:onClick
-    buttonNext: new Buttons("assets/images/buttons/button-next.png", 627, 540, 100, 40, 1, true),
-    buttonA: new Buttons("assets/images/buttons/arrow-a.png", 190, 400, 125, 164, 0.5, true),
-    buttonD: new Buttons("assets/images/buttons/arrow-d.png", 350, 400, 125, 164, 0.5, true),    
-    buttonLeft: new Buttons("assets/images/buttons/arrow-left.png", 890, 400, 125, 164, 0.5, true),    
-    buttonRight: new Buttons("assets/images/buttons/arrow-right.png", 1050, 400, 125, 164, 0.5, true),        
+export const buttons = {
+    // 1:src, 2:x, 3:y, 4:scale, 5:onClick 6:active
+    buttonNext: new Buttons("assets/images/buttons/button-next.png", 627, 540, 100, 40, 1, true, true),
+    buttonA: new Buttons("assets/images/buttons/arrow-a.png", 190, 400, 125, 164, 0.5, true, true),
+    buttonD: new Buttons("assets/images/buttons/arrow-d.png", 350, 400, 125, 164, 0.5, true, true),    
+    buttonLeft: new Buttons("assets/images/buttons/arrow-left.png", 890, 400, 125, 164, 0.5, true, true),    
+    buttonRight: new Buttons("assets/images/buttons/arrow-right.png", 1050, 400, 125, 164, 0.5, true, true),    
+    buttonLevels: []    
 };
     
 export function getButtons(name) {
     return buttons[name];
+}
+
+for (let i=1; i<9; i++){   
+    buttons.buttonLevels.push(        
+        new Buttons(
+            `assets/images/buttons/levels/${i}.png`,
+            400 + ((i - 1) % 4) * 150,
+            200 + Math.floor((i - 1) / 4) * 150,
+            141,
+            132,
+            0.5,
+            () => console.log("Button 1"),
+            true
+        )
+    )
 }

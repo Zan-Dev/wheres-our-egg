@@ -1,16 +1,21 @@
-import { setGameState } from "./game.js";
-import { getButtons, players } from "./component.js";
+import { setGameState, keys, InputKey } from "./game.js";
+import { Buttons, buttons, getButtons, playerSkin } from "./component.js";
 
 let lastTime = 0;
 let time = 0;
 const animDuration = 300;
 let charHandled = false;
 let menuHandled = false;
-const buttonNext = getButtons("buttonNext");
-const buttonA = getButtons("buttonA");
-const buttonD = getButtons("buttonD");
-const buttonRight = getButtons("buttonRight");
-const buttonLeft = getButtons("buttonLeft");
+let isMouseDown;
+let canvas = document.getElementById("board");
+const button = new Buttons();
+const buttonNext = buttons.buttonNext;
+const buttonA = buttons.buttonA;
+const buttonD = buttons.buttonD;
+const buttonRight = buttons.buttonRight;
+const buttonLeft = buttons.buttonLeft;
+const background = new Image();
+
 
 export function mainMenu(ctx){
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
@@ -29,19 +34,14 @@ export function mainMenu(ctx){
     ctx.fillText("press SPACE to start", ctx.canvas.width / 2, 350);
     time += 0.05;
 }
-export function updateMainMenu() {
-    if (!menuHandled) {
-        document.addEventListener("keydown", function(e){
-          if (e.code === "Space") {
-            setGameState("character");            
-          }
-        }, { once: true });
-        menuHandled = true;
-      }
+export function updateMainMenu() {    
+  if (InputKey("Space")) {
+    setGameState("character");            
+  }        
 }
 
 function loadSkins(ctx, deltaTime, timestamp) {
-  players.forEach((player, idx) => {
+  playerSkin.forEach((player, idx) => {
     const centerX = player.x;
     const centerY = 300;
     const offsetX = 180;
@@ -49,7 +49,7 @@ function loadSkins(ctx, deltaTime, timestamp) {
     const prevIndex = (player.index - 1 + player.skins.length) % player.skins.length;
     const nextIndex = (player.index + 1) % player.skins.length;
 
-    const progress = updateSkinAnimation(player, deltaTime, timestamp);
+    const progress = updateSkinAnimation(player, timestamp);
 
     const lerp = (a, b) => a + (b - a) * progress;
 
@@ -121,17 +121,17 @@ export function characterSelect(ctx, timestamp){
     ctx.font = "25px 'Press Start 2P'";
     ctx.fillText("CHOOSE YOUR SKIN", ctx.canvas.width / 2, 100);   
 
-    loadSkins(ctx, deltaTime, timestamp);       
+    loadSkins(ctx, deltaTime, timestamp);         
 
     buttonA.draw(ctx);
     buttonD.draw(ctx);
     buttonRight.draw(ctx);
     buttonLeft.draw(ctx);    
-    buttonNext.draw(ctx);  
+    buttonNext.draw(ctx);      
 }
 
-function triggerNextSkin(playerIndex) {
-  const player = players[playerIndex];
+export function triggerNextSkin(playerIndex) {
+  const player = playerSkin[playerIndex];
   if (!player.animating) {
     player.animating = true;
     player.animationDir = "left";
@@ -139,8 +139,8 @@ function triggerNextSkin(playerIndex) {
   }
 }
 
-function triggerPrevSkin(playerIndex) {
-  const player = players[playerIndex];
+export function triggerPrevSkin(playerIndex) {
+  const player = playerSkin[playerIndex];
   if (!player.animating) {
     player.animating = true;
     player.animationDir = "right";
@@ -148,7 +148,7 @@ function triggerPrevSkin(playerIndex) {
   }
 }
 
-function updateSkinAnimation(player, deltaTime, timestamp) {
+function updateSkinAnimation(player, timestamp) {
   const skinCount = player.skins.length;
 
   let progress = 0;
@@ -169,58 +169,36 @@ function updateSkinAnimation(player, deltaTime, timestamp) {
   return progress;
 }
 
-export function updateCharacter(ctx, canvas){
-    if (!charHandled) {
-        document.addEventListener("keydown", function(e){
-          if (e.code === "Space") {
-            setGameState("level");
-            console.log(1%2);                        
-          }
-
-          if (e.code === "KeyD") triggerNextSkin(0);
-          if (e.code === "KeyA") triggerPrevSkin(0);
-          if (e.code === "ArrowRight") triggerNextSkin(1);
-          if (e.code === "ArrowLeft") triggerPrevSkin(1);
-        });
-        charHandled = true;
-    }
-
-    canvas.addEventListener('mousedown', (e) => {
-      isMouseDown = true;
-      const rect = canvas.getBoundingClientRect();
-      const mouseX = e.clientX - rect.left;
-      const mouseY = e.clientY - rect.top;
-
-      if (buttonD.isMouseOver(mouseX,mouseY)) triggerNextSkin(0);
-      if (buttonA.isMouseOver(mouseX,mouseY)) triggerPrevSkin(0);
-      if (buttonRight.isMouseOver(mouseX, mouseY)) triggerNextSkin(1);
-      if (buttonLeft.isMouseOver(mouseX,mouseY)) triggerPrevSkin(1);
-      if (buttonNext.isMouseOver(mouseX,mouseY)) console.log("Play");
-               
-    });
-
-    canvas.addEventListener('mousemove', (e) => {
-      const rect = canvas.getBoundingClientRect();
-      const mouseX = e.clientX - rect.left;
-      const mouseY = e.clientY - rect.top;
-  
-      if (buttonNext.isMouseOver(mouseX, mouseY)) {
-          console.log("Mouse di atas tombol kiri");
-      }
-    });
+export function updateCharacter(ctx, canvas){   
+  if (InputKey("Space")) {
+    setGameState("level");
+    console.log(1%2);             
+  }
+  if (InputKey("KeyD")){
+    triggerNextSkin(0);
+    console.log("ganti");
+  }
+  if (InputKey("KeyA")) triggerPrevSkin(0);
+  if (InputKey("ArrowRight")) triggerNextSkin(1);
+  if (InputKey("ArrowLeft")) triggerPrevSkin(1);  
 }
 
-export function levelSelect(ctx){
-    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-
-    ctx.fillStyle = "#041423";
+export function levelSelect(ctx){    
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);    
     ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    background.src = 'assets/images/world-1.png';
+    ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
 
     ctx.fillStyle = "#ffffff";
     ctx.font = "25px 'Press Start 2P'";
-    ctx.fillText("CHOOSE LEVEL", ctx.canvas.width / 2, 100);   
+    ctx.fillText("CHOOSE LEVEL", ctx.canvas.width / 2 - 150, 100);   
+
+    for (let i=0; i<8; i++){
+      let level = buttons.buttonLevels[i];
+      level.draw(ctx);
+    }    
 }
 
 export function updateLevel(){
-
+  // Untuk Animasi
 }

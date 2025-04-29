@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Scrolling Background Example</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: #000;
+    }
+    canvas {
+      display: block;
+      background: #041423;
+    }
+  </style>
+</head>
+<body>
+<canvas id="gameCanvas"></canvas>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+const background = new Image();
+background.src = 'assets/images/world-1.png'; // Ganti link ini dengan filemu kalau offline
+
+let bgX = 0; // posisi background X
+const bgSpeed = 0.5; // kecepatan scroll background
+
+background.onload = function() {
+  requestAnimationFrame(gameLoop);
+};
+
+function gameLoop() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Menggambar dua background agar saat satu habis, yang lain sudah muncul
+  ctx.drawImage(background, bgX, 0, canvas.width, canvas.height);
+  ctx.drawImage(background, bgX + canvas.width, 0, canvas.width, canvas.height);
+
+  // Update posisi background
+  bgX -= bgSpeed;
+
+  // Reset posisi supaya loop tak terputus
+  if (bgX <= -canvas.width) {
+    bgX = 0;
+  }
+
+  // Gambar objek lain di atas background di sini (contoh kotak)
+  ctx.fillStyle = 'red';
+  ctx.fillRect(200, 300, 100, 100);
+
+  requestAnimationFrame(gameLoop);
+}
+</script>
+</body>
+</html>
