@@ -6,17 +6,13 @@ import {
 
         } from "./ui.js";
 
-import { buttons } from "./component.js";
+import { buttons, getButtons } from "./component.js";
 import { levelStatus } from "./levelManager.js";
+import { levelHandlers } from "./levels/indexLevel.js";
 
 let isMouseDown = true;
 let canvas, ctx;
 let gameState = "menu";
-const buttonNext = buttons.buttonNext;
-const buttonA = buttons.buttonA;
-const buttonD = buttons.buttonD;
-const buttonRight = buttons.buttonRight;
-const buttonLeft = buttons.buttonLeft;
 export const keys = {};
 export const mouse = {
   x: 0,
@@ -60,7 +56,6 @@ export function InputKey(code) {
     return false;
 }
 
-
 const gameStateHandlers = {
     menu: {
         update: updateMainMenu,
@@ -76,7 +71,14 @@ const gameStateHandlers = {
         update: (ctx, canvas) => updateLevel(ctx, canvas),
         draw: levelSelect,    
         onClick: handleLevelClick        
-    },    
+    },   
+    ...Object.entries(levelHandlers).reduce((acc, [name, handler]) => {
+        acc[name] = {
+          update: handler.updateLevel || (() => {}),
+          draw: handler.drawLevel || (() => {}),
+        };
+        return acc;
+      }, {}),  
 };
 
 export function handleLevelClick(mouseX, mouseY) {
@@ -87,23 +89,24 @@ export function handleLevelClick(mouseX, mouseY) {
 
         if(levelStatus[i].unlocked){
         if (level.clicked) {
-            buttonA.update(mouseX, mouseY, isMouseDown);
-            // console.log(`Level ${i + 1} clicked!`);        
+            buttons.buttonLevels[i].update(mouseX, mouseY, isMouseDown);
+            setGameState(`level${i + 1}`);               
+            console.log(`Level ${i + 1} clicked!`);        
         }
       }      
     }
 }
 
 export function handleSkinClick(mouseX, mouseY) {    
-    buttonA.update(mouseX, mouseY, isMouseDown);
-    if (buttonD.isMouseOver(mouseX,mouseY)){
+    getButtons("buttonA").update(mouseX, mouseY, isMouseDown);
+    if (getButtons("buttonD").isMouseOver(mouseX,mouseY)){
         triggerNextSkin(0);
         console.log("ASIK");
     } 
-    if (buttonA.isMouseOver(mouseX,mouseY)) triggerPrevSkin(0);
-    if (buttonRight.isMouseOver(mouseX, mouseY)) triggerNextSkin(1);
-    if (buttonLeft.isMouseOver(mouseX,mouseY)) triggerPrevSkin(1);
-    if (buttonNext.isMouseOver(mouseX,mouseY)) setGameState("level");
+    if (getButtons("buttonA").isMouseOver(mouseX,mouseY)) triggerPrevSkin(0);
+    if (getButtons("buttonRight").isMouseOver(mouseX, mouseY)) triggerNextSkin(1);
+    if (getButtons("buttonLeft").isMouseOver(mouseX,mouseY)) triggerPrevSkin(1);
+    if (getButtons("buttonNext").isMouseOver(mouseX,mouseY)) setGameState("level");
 }
 
 
@@ -128,7 +131,7 @@ function update() {
 }
 
 function draw(timestamp) {    
-    const handler = gameStateHandlers[gameState];
+    const handler = gameStateHandlers[gameState];    
     if (handler && handler.draw) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         handler.draw(ctx, timestamp);

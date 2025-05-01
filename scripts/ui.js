@@ -4,17 +4,19 @@ import { Buttons, buttons, getButtons, playerSkin } from "./component.js";
 let lastTime = 0;
 let time = 0;
 const animDuration = 300;
-let charHandled = false;
-let menuHandled = false;
 let isMouseDown;
 let canvas = document.getElementById("board");
-const button = new Buttons();
 const buttonNext = buttons.buttonNext;
 const buttonA = buttons.buttonA;
 const buttonD = buttons.buttonD;
 const buttonRight = buttons.buttonRight;
 const buttonLeft = buttons.buttonLeft;
+let backgroundLoaded = false;
 const background = new Image();
+background.src = 'assets/images/world-1.png';
+background.onload = () => {
+  backgroundLoaded = true;
+};
 
 
 export function mainMenu(ctx){
@@ -34,7 +36,7 @@ export function mainMenu(ctx){
     ctx.fillText("press SPACE to start", ctx.canvas.width / 2, 350);
     time += 0.05;
 }
-export function updateMainMenu() {    
+export function updateMainMenu() { 
   if (InputKey("Space")) {
     setGameState("character");            
   }        
@@ -171,12 +173,10 @@ function updateSkinAnimation(player, timestamp) {
 
 export function updateCharacter(ctx, canvas){   
   if (InputKey("Space")) {
-    setGameState("level");
-    console.log(1%2);             
+    setGameState("level");               
   }
   if (InputKey("KeyD")){
-    triggerNextSkin(0);
-    console.log("ganti");
+    triggerNextSkin(0);    
   }
   if (InputKey("KeyA")) triggerPrevSkin(0);
   if (InputKey("ArrowRight")) triggerNextSkin(1);
@@ -185,13 +185,17 @@ export function updateCharacter(ctx, canvas){
 
 export function levelSelect(ctx){    
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);    
-    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    background.src = 'assets/images/world-1.png';
-    ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
+    if (backgroundLoaded) {
+      ctx.drawImage(background, 0, 0, ctx.canvas.width, ctx.canvas.height);
+    } else {
+      // Fallback jika gambar belum dimuat
+      ctx.fillStyle = "#000"; // warna default sementara
+      ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    }
 
     ctx.fillStyle = "#ffffff";
     ctx.font = "25px 'Press Start 2P'";
-    ctx.fillText("CHOOSE LEVEL", ctx.canvas.width / 2 - 150, 100);   
+    ctx.fillText("CHOOSE LEVEL", ctx.canvas.width / 2, 100);   
 
     for (let i=0; i<8; i++){
       let level = buttons.buttonLevels[i];

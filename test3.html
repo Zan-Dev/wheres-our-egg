@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dino Game</title>
+  <style>
+    body { margin: 0; overflow: hidden; background: #000; }
+    canvas { display: block; }
+  </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const bgImage = new Image();
+        bgImage.src = "./assets/images/world-1.png";
+
+        const dino1Idle = new Image();
+        dino1Idle.src = "./assets/images/mono/idle.png";
+
+        const dino1Walk = new Image();
+        dino1Walk.src = "./assets/images/mono/move.png";
+
+        const dino2Idle = new Image();
+        dino2Idle.src = "./assets/images/vita/idle.png";
+
+        const dino2Walk = new Image();
+        dino2Walk.src = "./assets/images/vita/move.png";
+
+        const keys = {};
+        window.addEventListener("keydown", (e) => (keys[e.code] = true));
+        window.addEventListener("keyup", (e) => (keys[e.code] = false));
+
+        let frameTimer = 0;
+        const frameSpeed = 10;
+
+        const dino1 = {
+            x: 100,
+            y: canvas.height - 64,
+            speed: 3,
+            animations: {
+                idle: { image: dino1Idle, frameCount: 3 },
+                walk: { image: dino1Walk, frameCount: 6 },
+            },
+            currentAnim: "idle",
+            frameIndex: 0,
+            frameTimer: 0,
+            facing: "right",
+        };
+
+        const dino2 = {
+            x: 200,
+            y: canvas.height - 64,
+            speed: 3,
+            animations: {
+                idle: { image: dino2Idle, frameCount: 3 },
+                walk: { image: dino2Walk, frameCount: 6 },
+            },
+            currentAnim: "idle",
+            frameIndex: 0,
+            frameTimer: 0,
+            facing: "right",
+        };
+
+        function updateCharacters() {
+            let moving1 = false;
+            let moving2 = false;
+
+            const dinoWidth = 64;
+
+            if (keys["ArrowLeft"]) {
+                if (dino1.x - dino1.speed + dinoWidth > dino2.x) {
+                    dino1.x = dino2.x + dinoWidth;
+                } else {
+                    dino1.x -= dino1.speed;
+                }
+                dino1.facing = "left";
+                moving1 = true;
+            }
+            if (keys["ArrowRight"]) {
+                if (dino1.x + dino1.speed < dino2.x + dinoWidth) {
+                    dino1.x += dino1.speed;
+                } else {
+                    dino1.x = dino2.x - dinoWidth;
+                }
+                dino1.facing = "right";
+                moving1 = true;
+            }
+            if (keys["KeyA"]) {
+                if (dino2.x - dino2.speed + dinoWidth > dino1.x) {
+                    dino2.x = dino1.x + dinoWidth;
+                } else {
+                    dino2.x -= dino2.speed;
+                }
+                dino2.facing = "left";
+                moving2 = true;
+            }
+            if (keys["KeyD"]) {
+                if (dino2.x + dino2.speed < dino1.x + dinoWidth) {
+                    dino2.x += dino2.speed;
+                } else {
+                    dino2.x = dino1.x - dinoWidth;
+                }
+                dino2.facing = "right";
+                moving2 = true;
+            }
+
+            const distance = Math.abs(dino1.x - dino2.x);
+            if (distance > 400) {
+                if (dino1.x > dino2.x && keys["ArrowRight"]) dino1.x -= dino1.speed;
+                if (dino1.x < dino2.x && keys["ArrowLeft"]) dino1.x += dino1.speed;
+                if (dino2.x > dino1.x && keys["KeyD"]) dino2.x -= dino2.speed;
+                if (dino2.x < dino1.x && keys["KeyA"]) dino2.x += dino2.speed;
+            }
+
+            dino1.currentAnim = moving1 ? "walk" : "idle";
+            dino2.currentAnim = moving2 ? "walk" : "idle";
+        }
+
+        function updateFrame(character) {
+            const anim = character.animations[character.currentAnim];
+            if (++character.frameTimer >= frameSpeed) {
+                character.frameIndex = (character.frameIndex + 1) % anim.frameCount;
+                character.frameTimer = 0;
+            }
+        }
+
+        function drawCharacter(character, screenX) {
+            const anim = character.animations[character.currentAnim];
+            const spriteWidth = anim.image.width / anim.frameCount;
+            const spriteHeight = anim.image.height;
+            const drawX = screenX - 32;
+            const drawY = character.y - 64;
+            ctx.save();
+
+            if (character.facing === "left") {
+                ctx.translate(drawX + 64, drawY);
+                ctx.scale(-1, 1);
+                ctx.drawImage(
+                    anim.image,
+                    character.frameIndex * spriteWidth,
+                    0,
+                    spriteWidth,
+                    spriteHeight,
+                    0,
+                    0,
+                    64,
+                    64
+                );
+            } else {
+                ctx.translate(drawX, drawY);
+                ctx.drawImage(
+                    anim.image,
+                    character.frameIndex * spriteWidth,
+                    0,
+                    spriteWidth,
+                    spriteHeight,
+                    0,
+                    0,
+                    64,
+                    64
+                );
+            }
+
+            ctx.restore();
+        }
+
+        function draw() {
+            const midX = (dino1.x + dino2.x) / 2;
+            const offsetX = midX - canvas.width / 2;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(bgImage, -offsetX, 0, canvas.width, canvas.height);
+
+            drawCharacter(dino1, dino1.x - offsetX);
+            drawCharacter(dino2, dino2.x - offsetX);
+        }
+
+        function gameLoop() {
+            updateCharacters();
+            updateFrame(dino1);
+            updateFrame(dino2);
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        bgImage.onload = () => gameLoop();
+
+    </script>
+</body>
+</html>

@@ -99,7 +99,11 @@ export class Buttons{
         this.clicked = false;
         this.active = active;
 
-        this.onClick = onClick;                
+        this.onClick = onClick;    
+        
+        if (!imageSrc) {
+            console.error("imageSrc tidak didefinisikan untuk Button!");
+          }
     }
 
     isMouseOver(mouseX, mouseY) {
