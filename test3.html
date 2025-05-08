@@ -39,7 +39,7 @@
         const frameSpeed = 10;
 
         const dino1 = {
-            x: 100,
+            x: 200,
             y: canvas.height - 64,
             speed: 3,
             animations: {
@@ -53,7 +53,7 @@
         };
 
         const dino2 = {
-            x: 200,
+            x: 100,
             y: canvas.height - 64,
             speed: 3,
             animations: {
@@ -70,19 +70,20 @@
             let moving1 = false;
             let moving2 = false;
 
-            const dinoWidth = 64;
+            const dinoWidth = 64;          
+
 
             if (keys["ArrowLeft"]) {
-                if (dino1.x - dino1.speed + dinoWidth > dino2.x) {
-                    dino1.x = dino2.x + dinoWidth;
-                } else {
+                if (dino1.x - dino1.speed > dino2.x + dinoWidth || dino1.x - dino1.speed < dino2.x) {
                     dino1.x -= dino1.speed;
-                }
+                } else{
+                    dino1.x = dino2.x + dinoWidth;
+                }                
                 dino1.facing = "left";
                 moving1 = true;
             }
             if (keys["ArrowRight"]) {
-                if (dino1.x + dino1.speed < dino2.x + dinoWidth) {
+                if (dino1.x + dino1.speed < dino2.x - dinoWidth || dino1.x + dino1.speed > dino2.x) {
                     dino1.x += dino1.speed;
                 } else {
                     dino1.x = dino2.x - dinoWidth;
@@ -91,16 +92,16 @@
                 moving1 = true;
             }
             if (keys["KeyA"]) {
-                if (dino2.x - dino2.speed + dinoWidth > dino1.x) {
-                    dino2.x = dino1.x + dinoWidth;
+                if (dino2.x - dino2.speed > dino1.x + dinoWidth || dino2.x - dino2.speed < dino1.x) {
+                    dino2.x -= dino2.speed;                    
                 } else {
-                    dino2.x -= dino2.speed;
+                    dino2.x = dino1.x + dinoWidth;
                 }
                 dino2.facing = "left";
                 moving2 = true;
             }
             if (keys["KeyD"]) {
-                if (dino2.x + dino2.speed < dino1.x + dinoWidth) {
+                if (dino2.x + dino2.speed < dino1.x - dinoWidth || dino2.x + dino2.speed > dino1.x) {
                     dino2.x += dino2.speed;
                 } else {
                     dino2.x = dino1.x - dinoWidth;

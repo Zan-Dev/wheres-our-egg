@@ -1,3 +1,4 @@
+// SKIN //
 export class Skins {
     constructor(name, src, x, y, frameWidth, frameHeight, scaleWidth, scaleHeight, frameCount, frameInterval, flip = false) {
         this.name = name;
@@ -21,7 +22,7 @@ export class Skins {
         this.frameTimer += deltaTime;
         if (this.frameTimer >= this.frameInterval) {
           this.frameTimer = 0;
-          this.frameIndex = (this.frameIndex + 1) % this.frameCount;
+          this.frameIndex = (this.frameIndex + 1) % this.frameCount;    
         }
     }
     
@@ -85,6 +86,111 @@ export const playerSkin = [
     }
 ]  
 
+// PLAYERS // CLASS MASIH MASALAH DI ANIMASI {func: update, draw}
+export class Players {
+    constructor(x, y, speed, animations) {
+        this.x = x;
+        this.y = y;
+        this.speed = speed;
+        this.animations = animations;
+        this.currentAnim = 'idle';
+        this.frameIndex = 0;
+        this.frameTimer = 0;
+        this.facing = 'right';
+        this.width = 64;
+        this.height = 64;
+    }
+
+    update(keysLeft, keysRight, deltaTime) {                   
+        if (keysLeft) {
+            this.x -= this.speed;
+            this.facing = 'left';
+            this.setAnimation('walk');
+        } else if (keysRight) {
+            this.x += this.speed;
+            this.facing = 'right';
+            this.setAnimation('walk');
+        } else {
+            this.setAnimation('idle');
+        }
+        
+
+        // Update frame animasi
+        const anim = this.animations[this.currentAnim];
+        const frameInterval = 100; // kecepatan animasi (frame per detik)       
+        this.frameTimer += deltaTime;
+        if (this.frameTimer >= frameInterval) {
+          this.frameTimer = 0;
+          this.frameIndex = (this.frameIndex + 1) % anim.frameCount;                 
+        }
+    }
+
+    setAnimation(animName) {
+        if (this.currentAnim !== animName) {
+            this.currentAnim = animName;
+            this.frameIndex = 0;
+            this.frameTimer = 0;
+        }
+    }
+
+    draw(ctx) {
+        const anim = this.animations[this.currentAnim];
+        const frameWidth = anim.image.width / anim.frameCount;
+
+        ctx.save();
+        ctx.imageSmoothingEnabled = false;
+        ctx.translate(this.x + (this.facing === 'left' ? frameWidth + 64 : 0), this.y);
+        ctx.scale(this.facing === 'left' ? -1 : 1, 1);
+        ctx.drawImage(
+            anim.image,
+            this.frameIndex * frameWidth,
+            0,
+            frameWidth,
+            anim.image.height,
+            0,
+            0,
+            100,
+            100
+        );
+        ctx.restore();
+    }
+
+    getCenterX() {
+        return this.x + this.width / 2;
+    }
+}
+
+function loadImage(src) {
+    const img = new Image();
+    img.src = src;
+    return img;
+}
+
+function createAnimations(basePath, actions) {
+    const anim = {};
+    for (const action of actions) {
+        anim[action.name] = {
+            image: loadImage(`${basePath}/${action.file}`),
+            frameCount: action.frames
+        };
+    }
+    return anim;
+}
+
+const monoAnimations = createAnimations("./assets/images/mono", [
+    { name: "idle", file: "idle.png", frames: 3 },
+    { name: "walk", file: "move.png", frames: 6 },
+]);
+
+const vitaAnimations = createAnimations("./assets/images/vita", [
+    { name: "idle", file: "idle.png", frames: 3 },
+    { name: "walk", file: "move.png", frames: 6 },
+]);
+
+export const Player1 = new Players(200, 400, 5, monoAnimations);
+export const Player2 = new Players(300, 400, 5, vitaAnimations);
+
+// BUTTONS //
 export class Buttons{
     constructor(imageSrc, x, y, width, height, scale, onClick=null, active = null){
         this.image = new Image();
@@ -103,7 +209,7 @@ export class Buttons{
         
         if (!imageSrc) {
             console.error("imageSrc tidak didefinisikan untuk Button!");
-          }
+        }
     }
 
     isMouseOver(mouseX, mouseY) {

@@ -25,6 +25,10 @@ export function initInput(canvas) {
     keys[e.code] = true;
   });
 
+  window.addEventListener("keyup", (e) => {
+    keys[e.code] = false;
+  });
+
   canvas.addEventListener('mouseup', (e) => {
     mouse.down = false;
   });
@@ -75,7 +79,7 @@ const gameStateHandlers = {
     ...Object.entries(levelHandlers).reduce((acc, [name, handler]) => {
         acc[name] = {
           update: handler.updateLevel || (() => {}),
-          draw: handler.drawLevel || (() => {}),
+          draw: (ctx, deltaTime) => handler.drawLevel(ctx, deltaTime) || (() => {}),
         };
         return acc;
       }, {}),  
