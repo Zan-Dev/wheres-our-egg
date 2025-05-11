@@ -86,7 +86,7 @@ export const playerSkin = [
     }
 ]  
 
-// PLAYERS // CLASS MASIH MASALAH DI ANIMASI {func: update, draw}
+// PLAYERS // PROBLEM DI LOGICAL DOUBLE JUMP TANDA ???
 export class Players {
     constructor(x, y, speed, animations) {
         this.x = x;
@@ -99,21 +99,121 @@ export class Players {
         this.facing = 'right';
         this.width = 64;
         this.height = 64;
+
+        this.vy = 0;
+        this.gravity = 0.5;
+        this.jumpStrength = -10;
+        this.isJumping = false;
+        this.onGround = true;
+        this.jumpCount = 0;
+        this.maxJump = 2;
+        this.jumpPressed = this.false;
+        this.idle = true;
+
+        this.bite = false;
+        this.biteTimer = 0;
+        this.biteDuration = 200; 
+
+        this.kick = false;
+        this.kickTimer = 0;
+        this.kickDuration = 200; 
+            
     }
 
-    update(keysLeft, keysRight, deltaTime) {                   
-        if (keysLeft) {
+    update(player,keysLeft, keysRight, keysJump, keysBite, keysSkill1, keysSkill2, deltaTime) {                           
+        if (keysSkill1) {
+            if (player === "player1") {
+                this.kickTimer = 0;
+                this.kick = true;
+                this.idle = false;
+            } else {                           
+                if (keysRight) {                    
+                    this.x += this.speed;
+                    this.facing = 'right';
+                    this.setAnimation('crouch');
+                } else if (keysLeft) {
+                    this.x -= this.speed;
+                    this.facing = 'left';
+                    this.setAnimation('crouch');
+                } else {
+                    this.setAnimation('crouchIdle');
+                }
+            }
+        }        
+        else if (keysBite) {
+            this.biteTimer = 0;
+            this.bite = true;
+            this.idle = false;
+        }        
+        else if (keysLeft) {
             this.x -= this.speed;
             this.facing = 'left';
             this.setAnimation('walk');
-        } else if (keysRight) {
+        }
+        else if (keysRight) {
             this.x += this.speed;
             this.facing = 'right';
             this.setAnimation('walk');
-        } else {
+        }        
+        else if (this.idle) {
             this.setAnimation('idle');
         }
-        
+
+        // KICK
+        if (this.kick){
+            this.kickTimer += deltaTime;
+            this.setAnimation('kick');
+
+            if (this.kickTimer >= this.kickDuration) {
+                this.kick = false;
+                this.idle = true;
+                this.kickTimer = 0;                
+            } 
+        }
+        // END KICK
+
+        // BITE
+        if (this.bite) {
+            this.biteTimer += deltaTime;
+            this.setAnimation('bite');
+
+            if (this.biteTimer >= this.biteDuration) {
+                this.bite = false;
+                this.idle = true;
+                this.biteTimer = 0;
+            }
+        }
+        //END BITE
+
+        // JUMP
+        if (keysJump && this.onGround) {
+            this.vy = this.jumpStrength;
+            this.onGround = false;
+            this.setAnimation('jump');
+        }
+                
+        if (keysJump) {
+            if (!this.jumpPressed && this.jumpCount < this.maxJump && player === "player1") {
+                this.vy = this.jumpStrength;
+                this.jumpCount++;
+                this.onGround = false;
+                this.setAnimation('jump');
+                this.jumpPressed = true;
+            }
+        } else {
+            this.jumpPressed = false;
+        }
+
+        this.vy += this.gravity;
+        this.y += this.vy;                                      
+              
+        if (this.y >= 400) {
+            this.y = 400;
+            this.vy = 0;
+            this.jumpCount = 0;
+            this.onGround = true;
+        }
+        // END JUMP
 
         // Update frame animasi
         const anim = this.animations[this.currentAnim];
@@ -125,7 +225,7 @@ export class Players {
         }
     }
 
-    setAnimation(animName) {
+    setAnimation(animName) {        
         if (this.currentAnim !== animName) {
             this.currentAnim = animName;
             this.frameIndex = 0;
@@ -180,11 +280,18 @@ function createAnimations(basePath, actions) {
 const monoAnimations = createAnimations("./assets/images/mono", [
     { name: "idle", file: "idle.png", frames: 3 },
     { name: "walk", file: "move.png", frames: 6 },
+    { name: "bite", file: "bite.png", frames: 3 },
+    { name: "jump", file: "jump.png", frames: 4 },
+    { name: "kick", file: "kick.png", frames: 3 },
 ]);
 
 const vitaAnimations = createAnimations("./assets/images/vita", [
     { name: "idle", file: "idle.png", frames: 3 },
     { name: "walk", file: "move.png", frames: 6 },
+    { name: "bite", file: "bite.png", frames: 3 },
+    { name: "jump", file: "jump.png", frames: 4 },
+    { name: "crouch", file: "crouch.png", frames: 6 },
+    { name: "crouchIdle", file: "crouchIdle.png", frames: 1 },
 ]);
 
 export const Player1 = new Players(200, 400, 5, monoAnimations);

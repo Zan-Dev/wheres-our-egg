@@ -19,9 +19,8 @@ export function drawLevel(ctx, timestamp){
     ctx.fillText("press SPACE to start", ctx.canvas.width / 2, 350);
     time += 0.05;
     
-    Player1.update(keys["ArrowLeft"], keys["ArrowRight"], deltaTime);
-    Player2.update(keys["KeyA"], keys["KeyD"], deltaTime);       
-    console.log("A:", keys["KeyA"], "D:", keys["KeyD"]);
+    Player1.update("player1", keys["KeyA"], keys["KeyD"], keys["KeyW"], keys["KeyQ"], keys["KeyX"], keys["KeyL"], deltaTime);
+    Player2.update("player2", keys["ArrowLeft"], keys["ArrowRight"], keys["ArrowUp"], keys["KeyO"], keys["ArrowDown"], keys["KeyP"], deltaTime);           
 
     Player1.draw(ctx, cameraX);
     Player2.draw(ctx, cameraX); 
