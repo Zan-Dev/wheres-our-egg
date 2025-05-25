@@ -1,196 +1,100 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Dino Game</title>
+  <meta charset="UTF-8" />
+  <title>Simple Two-Character Game</title>
   <style>
-    body { margin: 0; overflow: hidden; background: #000; }
-    canvas { display: block; }
+    body { margin: 0; overflow: hidden; }
+    canvas { display: block; background: #eef; }
   </style>
 </head>
 <body>
-    <canvas id="gameCanvas"></canvas>
-    <script>
-        const canvas = document.getElementById("gameCanvas");
-        const ctx = canvas.getContext("2d");
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+<canvas id="gameCanvas" width="800" height="400"></canvas>
 
-        const bgImage = new Image();
-        bgImage.src = "./assets/images/world-1.png";
+<script>
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
 
-        const dino1Idle = new Image();
-        dino1Idle.src = "./assets/images/mono/idle.png";
+  const keys = {};
 
-        const dino1Walk = new Image();
-        dino1Walk.src = "./assets/images/mono/move.png";
+  class Character {
+    constructor(x, color) {
+      this.x = x;
+      this.y = 300;
+      this.width = 30;
+      this.height = 50;
+      this.color = color;
+      this.speed = 4;
+    }
 
-        const dino2Idle = new Image();
-        dino2Idle.src = "./assets/images/vita/idle.png";
+    update(keyLeft, keyRight) {
+      if (keys[keyLeft]) this.x -= this.speed;
+      if (keys[keyRight]) this.x += this.speed;
+    }
 
-        const dino2Walk = new Image();
-        dino2Walk.src = "./assets/images/vita/move.png";
+    draw(cameraX) {
+      ctx.fillStyle = this.color;
+      ctx.fillRect(this.x - cameraX, this.y, this.width, this.height);
+    }
+  }
 
-        const keys = {};
-        window.addEventListener("keydown", (e) => (keys[e.code] = true));
-        window.addEventListener("keyup", (e) => (keys[e.code] = false));
+  class Platform {
+    constructor() {
+      this.x = 0;
+      this.y = 350;
+      this.width = 3000;
+      this.height = 20;
+      this.color = '#654321';
+    }
 
-        let frameTimer = 0;
-        const frameSpeed = 10;
+    draw(cameraX) {
+      ctx.fillStyle = this.color;
+      ctx.fillRect(this.x - cameraX, this.y, this.width, this.height);
+    }
+  }
 
-        const dino1 = {
-            x: 200,
-            y: canvas.height - 64,
-            speed: 3,
-            animations: {
-                idle: { image: dino1Idle, frameCount: 3 },
-                walk: { image: dino1Walk, frameCount: 6 },
-            },
-            currentAnim: "idle",
-            frameIndex: 0,
-            frameTimer: 0,
-            facing: "right",
-        };
+  const player1 = new Character(200, 'red');
+  const player2 = new Character(300, 'blue');
+  const platform = new Platform();
 
-        const dino2 = {
-            x: 100,
-            y: canvas.height - 64,
-            speed: 3,
-            animations: {
-                idle: { image: dino2Idle, frameCount: 3 },
-                walk: { image: dino2Walk, frameCount: 6 },
-            },
-            currentAnim: "idle",
-            frameIndex: 0,
-            frameTimer: 0,
-            facing: "right",
-        };
+  let cameraX = 0;
 
-        function updateCharacters() {
-            let moving1 = false;
-            let moving2 = false;
+  function update() {
+    player1.update('a', 'd');      // Player 1: A & D
+    player2.update('ArrowLeft', 'ArrowRight'); // Player 2: ← & →
 
-            const dinoWidth = 64;          
+    // Hit boundaries of platform
+    player1.x = Math.max(platform.x, Math.min(player1.x, platform.x + platform.width - player1.width));
+    player2.x = Math.max(platform.x, Math.min(player2.x, platform.x + platform.width - player2.width));
 
+    // Kamera mengikuti titik tengah antar karakter
+    const centerX = (player1.x + player2.x) / 2;
+    cameraX = centerX - canvas.width / 2;
+    console.log(canvas.width);
 
-            if (keys["ArrowLeft"]) {
-                if (dino1.x - dino1.speed > dino2.x + dinoWidth || dino1.x - dino1.speed < dino2.x) {
-                    dino1.x -= dino1.speed;
-                } else{
-                    dino1.x = dino2.x + dinoWidth;
-                }                
-                dino1.facing = "left";
-                moving1 = true;
-            }
-            if (keys["ArrowRight"]) {
-                if (dino1.x + dino1.speed < dino2.x - dinoWidth || dino1.x + dino1.speed > dino2.x) {
-                    dino1.x += dino1.speed;
-                } else {
-                    dino1.x = dino2.x - dinoWidth;
-                }
-                dino1.facing = "right";
-                moving1 = true;
-            }
-            if (keys["KeyA"]) {
-                if (dino2.x - dino2.speed > dino1.x + dinoWidth || dino2.x - dino2.speed < dino1.x) {
-                    dino2.x -= dino2.speed;                    
-                } else {
-                    dino2.x = dino1.x + dinoWidth;
-                }
-                dino2.facing = "left";
-                moving2 = true;
-            }
-            if (keys["KeyD"]) {
-                if (dino2.x + dino2.speed < dino1.x - dinoWidth || dino2.x + dino2.speed > dino1.x) {
-                    dino2.x += dino2.speed;
-                } else {
-                    dino2.x = dino1.x - dinoWidth;
-                }
-                dino2.facing = "right";
-                moving2 = true;
-            }
+    // Pastikan kamera tidak keluar dari batas platform
+    cameraX = Math.max(0, Math.min(cameraX, platform.width - canvas.width));
+  }
 
-            const distance = Math.abs(dino1.x - dino2.x);
-            if (distance > 400) {
-                if (dino1.x > dino2.x && keys["ArrowRight"]) dino1.x -= dino1.speed;
-                if (dino1.x < dino2.x && keys["ArrowLeft"]) dino1.x += dino1.speed;
-                if (dino2.x > dino1.x && keys["KeyD"]) dino2.x -= dino2.speed;
-                if (dino2.x < dino1.x && keys["KeyA"]) dino2.x += dino2.speed;
-            }
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    platform.draw(cameraX);
+    player1.draw(cameraX);
+    player2.draw(cameraX);
+  }
 
-            dino1.currentAnim = moving1 ? "walk" : "idle";
-            dino2.currentAnim = moving2 ? "walk" : "idle";
-        }
+  function gameLoop() {
+    update();
+    draw();
+    requestAnimationFrame(gameLoop);
+  }
 
-        function updateFrame(character) {
-            const anim = character.animations[character.currentAnim];
-            if (++character.frameTimer >= frameSpeed) {
-                character.frameIndex = (character.frameIndex + 1) % anim.frameCount;
-                character.frameTimer = 0;
-            }
-        }
+  // Input tracking
+  window.addEventListener('keydown', e => keys[e.key] = true);
+  window.addEventListener('keyup', e => keys[e.key] = false);
 
-        function drawCharacter(character, screenX) {
-            const anim = character.animations[character.currentAnim];
-            const spriteWidth = anim.image.width / anim.frameCount;
-            const spriteHeight = anim.image.height;
-            const drawX = screenX - 32;
-            const drawY = character.y - 64;
-            ctx.save();
-
-            if (character.facing === "left") {
-                ctx.translate(drawX + 64, drawY);
-                ctx.scale(-1, 1);
-                ctx.drawImage(
-                    anim.image,
-                    character.frameIndex * spriteWidth,
-                    0,
-                    spriteWidth,
-                    spriteHeight,
-                    0,
-                    0,
-                    64,
-                    64
-                );
-            } else {
-                ctx.translate(drawX, drawY);
-                ctx.drawImage(
-                    anim.image,
-                    character.frameIndex * spriteWidth,
-                    0,
-                    spriteWidth,
-                    spriteHeight,
-                    0,
-                    0,
-                    64,
-                    64
-                );
-            }
-
-            ctx.restore();
-        }
-
-        function draw() {
-            const midX = (dino1.x + dino2.x) / 2;
-            const offsetX = midX - canvas.width / 2;
-
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(bgImage, -offsetX, 0, canvas.width, canvas.height);
-
-            drawCharacter(dino1, dino1.x - offsetX);
-            drawCharacter(dino2, dino2.x - offsetX);
-        }
-
-        function gameLoop() {
-            updateCharacters();
-            updateFrame(dino1);
-            updateFrame(dino2);
-            draw();
-            requestAnimationFrame(gameLoop);
-        }
-
-        bgImage.onload = () => gameLoop();
-
-    </script>
+  // Start game
+  gameLoop();
+</script>
 </body>
 </html>

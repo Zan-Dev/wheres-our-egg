@@ -78,7 +78,7 @@ const gameStateHandlers = {
     },   
     ...Object.entries(levelHandlers).reduce((acc, [name, handler]) => {
         acc[name] = {
-          update: handler.updateLevel || (() => {}),
+          update: (ctx) => handler.updateLevel(ctx) || (() => {}),
           draw: (ctx, deltaTime) => handler.drawLevel(ctx, deltaTime) || (() => {}),
         };
         return acc;
