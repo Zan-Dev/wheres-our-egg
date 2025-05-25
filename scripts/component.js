@@ -86,279 +86,6 @@ export const playerSkin = [
     }
 ]  
 
-// PLAYERS
-// export class Players {
-//     constructor(x, y, speed, animations) {
-//         this.x = x;
-//         this.y = y;
-//         this.speed = speed;
-//         this.animations = animations;
-//         this.currentAnim = 'idle';
-//         this.frameIndex = 0;
-//         this.frameTimer = 0;
-//         this.facing = 'right';
-//         this.width = 100;
-//         this.height = 100;
-
-//         this.vy = 0;
-//         this.gravity = 0.5;
-//         this.jumpStrength = -10;
-//         this.isJumping = false;
-//         this.onGround = true;
-//         this.jumpCount = 0;
-//         this.maxJump = 2;
-//         this.jumpPressed = false;
-//         this.idle = true;
-
-//         this.bite = false;
-//         this.biteTimer = 0;
-//         this.biteDuration = 200; 
-
-//         this.kick = false;
-//         this.kickTimer = 0;
-//         this.kickDuration = 200; 
-
-//         this.worldX = this.x
-//     }
-
-//     update(player,keysLeft, keysRight, keysJump, keysBite, keysSkill1, keysSkill2, deltaTime, obstacles, levelWidth) {         
-//         let nextX = this.x;   
-//         let nextY = this.y + this.vy;
-//         let canMoveX = true;          
-//         let canMoveY = true;   
-//         this.worldX = nextX; 
-                       
-//         if (keysSkill1) {
-//             if (player === "player1") {
-//                 this.kickTimer = 0;
-//                 this.kick = true;
-//                 this.idle = false;
-//             } else {                           
-//                 if (keysRight) {                    
-//                     // this.x += this.speed;
-//                     this.facing = 'right';
-//                     this.setAnimation('crouch');
-//                     nextX = this.x + this.speed;
-//                 } else if (keysLeft) {
-//                     // this.x -= this.speed;
-//                     this.facing = 'left';
-//                     this.setAnimation('crouch');
-//                     nextX = this.x - this.speed; 
-//                 } else {
-//                     this.setAnimation('crouchIdle');
-//                 }
-//             }
-//         } 
-//         else if (keysBite) {
-//             this.biteTimer = 0;
-//             this.bite = true;
-//             this.idle = false;
-//         }        
-//         else if (keysLeft) {            
-//             this.facing = 'left';
-//             this.setAnimation('walk');            
-//             nextX = this.x - this.speed;       
-//         }
-//         else if (keysRight) {            
-//             this.facing = 'right';
-//             this.setAnimation('walk');
-//             nextX = this.x + this.speed;
-//         }        
-//         else if (this.idle) {
-//             this.setAnimation('idle');
-//         } 
-//         if (nextX < 0) nextX = 0;
-//         if (nextX + this.width > levelWidth) nextX = levelWidth - this.width;
-
-//         // KICK
-//         if (this.kick){
-//             this.kickTimer += deltaTime;
-//             this.setAnimation('kick');
-
-//             if (this.kickTimer >= this.kickDuration) {
-//                 this.kick = false;
-//                 this.idle = true;
-//                 this.kickTimer = 0;                
-//             } 
-//         }
-//         // END KICK
-
-//         // BITE
-//         if (this.bite) {
-//             this.biteTimer += deltaTime;
-//             this.setAnimation('bite');
-
-//             if (this.biteTimer >= this.biteDuration) {
-//                 this.bite = false;
-//                 this.idle = true;
-//                 this.biteTimer = 0;
-//             }
-//         }
-//         //END BITE
-
-//         // JUMP
-//         if (keysJump && this.onGround) {
-//             this.vy = this.jumpStrength;
-//             this.onGround = false;
-//             this.setAnimation('jump');
-//         }
-                
-//         if (keysJump) {
-//             if (!this.jumpPressed && this.jumpCount < this.maxJump && player === "player1") {
-//                 this.vy = this.jumpStrength;
-//                 this.jumpCount++;
-//                 this.onGround = false;
-//                 this.setAnimation('jump');
-//                 this.jumpPressed = true;
-//             }
-//         } else {
-//             this.jumpPressed = false;
-//         }
-
-//         for (let obj of obstacles) {            
-//             if (obj !== this) {
-//                 const otherBox = obj.getBoundingBox();
-                
-//                 const nextBox = {
-//                     x: nextX,
-//                     y: this.y,
-//                     width: this.width,
-//                     height: this.height
-//                 };
-
-//                 if (
-//                     nextBox.x < otherBox.x + otherBox.width &&
-//                     nextBox.x + nextBox.width > otherBox.x &&
-//                     nextBox.y < otherBox.y + otherBox.height &&
-//                     nextBox.y + nextBox.height > otherBox.y
-//                 ) {
-//                     canMoveX = false;                
-//                     break;
-//                 }
-//             }
-//         }        
-
-//         if (canMoveX) {
-//             this.x = nextX;               
-//             this.onGround = false;           
-//         }        
-
-//         this.vy += this.gravity;
-//         nextY = this.y + this.vy;        
-
-//         for (let obj of obstacles) {
-//             if (obj !== this) {
-//                 const otherBox = obj.getBoundingBox();
-                
-//                 // console.log("nextY:", nextY);
-//                 // console.log("otherBox.y:", otherBox.y);            
-//                 const nextBoxY = {
-//                     x: this.x,
-//                     y: nextY,
-//                     width: this.width,
-//                     height: this.height
-//                 };
-                                      
-//                 if (
-//                     nextBoxY.x < otherBox.x + otherBox.width &&
-//                     nextBoxY.x + nextBoxY.width > otherBox.x &&
-//                     nextBoxY.y < otherBox.y + otherBox.height &&
-//                     nextBoxY.y + nextBoxY.height > otherBox.y
-//                 ) {
-//                     // Collision ke bawah (jatuh)
-//                     if (this.vy > 0) {
-//                         // jatuh
-//                         nextY = otherBox.y - this.height;
-//                         // console.log(otherBox.y);
-//                         this.vy = 0;
-//                         this.onGround = true;
-//                         this.jumpCount = 0;
-//                     } else if (this.vy < 0) {                        
-//                         nextY = otherBox.y + otherBox.height;                        
-//                         this.vy = 0;
-//                     }
-//                 }        
-//             }
-//         }        
-//         this.y = nextY;
-
-//         // END JUMP 
-
-//         const anim = this.animations[this.currentAnim];
-//         const frameInterval = 100;       
-//         this.frameTimer += deltaTime;
-//         if (this.frameTimer >= frameInterval) {
-//           this.frameTimer = 0;
-//           this.frameIndex = (this.frameIndex + 1) % anim.frameCount;                 
-//         }
-
-//         // this.x = Math.max(0, Math.min(3000 - this.width, this.x));
-//     }
-
-//     setAnimation(animName) {        
-//         if (this.currentAnim !== animName) {
-//             this.currentAnim = animName;
-//             this.frameIndex = 0;
-//             this.frameTimer = 0;
-//         }
-//     }
-
-//     draw(ctx, offsetX) {
-//         const anim = this.animations[this.currentAnim];
-//         const frameWidth = anim.image.width / anim.frameCount;
-
-//         ctx.save();
-//         ctx.imageSmoothingEnabled = false;
-
-//         if (this.facing === 'left') {            
-//             ctx.translate(this.x + 100, this.y);
-//             ctx.scale(-1, 1);
-//             ctx.drawImage(
-//                 anim.image,
-//                 this.frameIndex * frameWidth,
-//                 0,
-//                 frameWidth,
-//                 anim.image.height,
-//                 0,
-//                 0,
-//                 this.width,
-//                 this.height
-//             );
-//         } else {
-//             // Normal
-//             ctx.drawImage(
-//                 anim.image,
-//                 this.frameIndex * frameWidth,
-//                 0,
-//                 frameWidth,
-//                 anim.image.height,
-//                 this.worldX - offsetX,
-//                 this.y,
-//                 this.width,
-//                 this.height
-//             );
-//         }    
-//         const box = this.getBoundingBox();
-//         ctx.strokeStyle = 'red';
-//         ctx.lineWidth = 2; 
-//         ctx.strokeRect(box.x - offsetX, box.y, box.width, box.height);
-//         ctx.restore();        
-//     }
-// ///////////////////////////////////////////
-//     getCenterX() {
-//         return this.x + this.width / 2;
-//     }
-
-//     getBoundingBox() {
-//         return {
-//             x: this.x + 40,
-//             y: this.y + 40, 
-//             width: 20, 
-//             height: 20  
-//         };
-//     }   
-// }
-
 export class Players {
     constructor(x, y, speed, animations) {
         this.worldX = x;
@@ -389,12 +116,26 @@ export class Players {
         this.kick = false;
         this.kickTimer = 0;
         this.kickDuration = 200;
+
+        this.carry = false;
+        this.carryPressed = false;
+        this.nearEgg = false;
     }
 
     update(player, keysLeft, keysRight, keysJump, keysBite, keysSkill1, keysSkill2, deltaTime, obstacles, levelWidth) {
         let nextX = this.worldX;
         let nextY = this.y + this.vy;
         let canMoveX = true;
+        
+        if (keysSkill2 && !this.carryPressed) {
+            // Hanya aktifkan carry jika dekat dengan telur atau sedang dalam mode carry
+            if (this.nearEgg || this.carry) {
+                this.carry = !this.carry;
+            }
+            this.carryPressed = true;
+        } else if (!keysSkill2) {
+            this.carryPressed = false;
+        }      
 
         if (keysSkill1) {
             if (player === "player1") {
@@ -414,6 +155,18 @@ export class Players {
                     this.setAnimation('crouchIdle');
                 }
             }
+        } else if (this.carry) {            
+            if (keysRight) {
+                this.facing = 'right';
+                this.setAnimation('carry');
+                nextX += this.speed;
+            } else if (keysLeft) {
+                this.facing = 'left';
+                this.setAnimation('carry');
+                nextX -= this.speed;
+            } else {
+                this.setAnimation('idleCarry');
+            }
         } else if (keysBite) {
             this.biteTimer = 0;
             this.bite = true;
@@ -428,7 +181,7 @@ export class Players {
             nextX += this.speed;
         } else if (this.idle) {
             this.setAnimation('idle');
-        }
+        }        
 
         if (nextX < 0) nextX = 0;
         if (nextX + this.width > levelWidth) nextX = levelWidth - this.width;
@@ -478,7 +231,7 @@ export class Players {
                     x: nextX,
                     y: this.y,
                     width: this.width,
-                    height: this.height
+                    height: this.height                    
                 };
                 if (
                     nextBox.x < otherBox.x + otherBox.width &&
@@ -488,7 +241,7 @@ export class Players {
                 ) {
                     canMoveX = false;
                     break;
-                }
+                }                
             }
         }
 
@@ -503,9 +256,11 @@ export class Players {
         for (let obj of obstacles) {
             if (obj !== this) {
                 const otherBox = obj.getBoundingBox();
+                const currentBox = this.getBoundingBox();
                 const nextBoxY = {
                     x: this.worldX,
                     y: nextY,
+                    // y: nextY + (currentBox.y - this.y),
                     width: this.width,
                     height: this.height
                 };
@@ -516,7 +271,7 @@ export class Players {
                     nextBoxY.y + nextBoxY.height > otherBox.y
                 ) {
                     if (this.vy > 0) {
-                        nextY = otherBox.y - this.height;
+                        nextY = otherBox.y - this.height;                       
                         this.vy = 0;
                         this.onGround = true;
                         this.jumpCount = 0;
@@ -524,7 +279,7 @@ export class Players {
                         nextY = otherBox.y + otherBox.height;
                         this.vy = 0;
                     }
-                }
+                }            
             }
         }
 
@@ -548,44 +303,54 @@ export class Players {
     }
 
     draw(ctx, offsetX) {
+        const box = this.getBoundingBox();
         const anim = this.animations[this.currentAnim];
-        const frameWidth = anim.image.width / anim.frameCount;
+        const frameWidth = anim.frameWidth || anim.image.width / anim.frameCount;
+        const frameHeight = anim.frameHeight || 24
 
         ctx.save();
         ctx.imageSmoothingEnabled = false;
 
-        if (this.facing === 'left') {
-            ctx.translate(this.worldX - offsetX + this.width, this.y);
+        let offsetY = 0;
+        if (this.currentAnim === 'carry' || this.currentAnim === 'idleCarry') {
+            offsetY = 20;
+        }
+
+        if (this.facing === 'left') {            
+            ctx.strokeStyle = 'red';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(box.x - offsetX, box.y , box.width, box.height);
+            ctx.translate(this.worldX - offsetX + this.width, this.y - offsetY);
             ctx.scale(-1, 1);
             ctx.drawImage(
                 anim.image,
                 this.frameIndex * frameWidth,
                 0,
                 frameWidth,
-                anim.image.height,
+                frameHeight,
                 0,
                 0,
                 this.width,
                 this.height
-            );
+            );            
         } else {
             ctx.drawImage(
                 anim.image,
                 this.frameIndex * frameWidth,
                 0,
                 frameWidth,
-                anim.image.height,
+                frameHeight,
                 this.worldX - offsetX,
-                this.y,
+                this.y - offsetY,
                 this.width,
                 this.height
             );
+        
+            ctx.strokeStyle = 'red';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(box.x - offsetX, box.y, box.width, box.height);
         }
-
-        const box = this.getBoundingBox();
-        ctx.strokeStyle = 'red';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(box.x - offsetX, box.y, box.width, box.height);
+        
         ctx.restore();
     }
 
@@ -593,21 +358,29 @@ export class Players {
         return this.worldX + this.width / 2;
     }
 
-    getBoundingBox() {
+    getBoundingBox() {        
         if (this.currentAnim === 'crouch' || this.currentAnim === 'crouchIdle') {
-            // Lower bounding box when crouching
             return {
-                x: this.worldX + 40,
-                y: this.y + 60,  // move bounding box down by 20 pixels
-                width: 20,
-                height: 10     // reduce height accordingly
+                x: this.worldX + 30,
+                y: this.y + 60,
+                width: this.width - 45,
+                height: this.height - 60 
             };
-        } else {
+        } else if (this.currentAnim === 'carry' || this.currentAnim === 'idleCarry') {
+            const anim = this.animations[this.currentAnim];
             return {
-                x: this.worldX + 40,
-                y: this.y + 40,
-                width: 20,
-                height: 20
+                x: this.worldX + 30,
+                y: this.y - 15,
+                width: this.width - 45,
+                height: this.height
+            }
+        }
+        else {
+            return {
+                x: this.worldX + 30,
+                y: this.y + 15,
+                width: this.width - 45,
+                height: this.height - 30
             };
         }
     }
@@ -624,8 +397,11 @@ function createAnimations(basePath, actions) {
     const anim = {};
     for (const action of actions) {
         anim[action.name] = {
-            image: loadImage(`${basePath}/${action.file}`),
-            frameCount: action.frames
+            image: loadImage(`${basePath}/${action.file}`),            
+            frameCount: action.frames,
+            frameInterval: action.interval || 100,
+            frameWidth: action.frameWidth,
+            frameHeight: action.frameHeight
         };
     }
     return anim;
@@ -646,13 +422,15 @@ const vitaAnimations = createAnimations("./assets/images/vita", [
     { name: "jump", file: "jump.png", frames: 4 },
     { name: "crouch", file: "crouch.png", frames: 6 },
     { name: "crouchIdle", file: "crouchIdle.png", frames: 1 },
+    { name: "idleCarry", file: "iddleCarry.png", frames: 3, frameWidth: 24, frameHeight: 24},
+    { name: "carry", file: "carryingEgg.png", frames: 6, frameWidth: 24, frameHeight: 24}
 ]);
 
 export const Player1 = new Players(200, 400, 5, monoAnimations);
 export const Player2 = new Players(300, 400, 5, vitaAnimations);
 
 // OBSTACLES
-export class obstacles{
+export class Obstacles{
     constructor(options) {
         // Posisi dan ukuran
         this.x = options.x;
@@ -687,7 +465,9 @@ export class obstacles{
         this.offset = 0;
 
         this.cameraX = 0;  // posisi scroll platform (offset)
-        this.canvasWidth = options.canvasWidth || 3000;        
+        this.canvasWidth = options.canvasWidth || 3000;    
+        
+        this.isCarried = options.isCarried || false;
     }
 
     update(deltaTime, player1, player2, cameraX) {
@@ -701,35 +481,30 @@ export class obstacles{
         }
         
         const worldWidth = this.canvasWidth;
-        const playerWidth = player1.width || 50; // default jika tidak didefinisikan
+        const playerWidth = player1.width || 50;
         const canvasMid = this.canvasWidth / 2;        
-
-        ///////////////////!!!!!!!!!!!!!!!!!!!!!!!!!!!!!////////////////////
-        // let maxCamera = Math.max(0, Math.min(cameraX, worldWidth - this.canvasWidth));
+       
         player1.worldX = Math.max(0, Math.min(worldWidth - playerWidth, player1.worldX)); // posisi player 1
         player2.worldX = Math.max(0, Math.min(worldWidth - playerWidth, player2.worldX)); // posisi player 2  membandingkan nilai parameter 1 dan nilai parameter 2
 
-        console.log(Player1.worldX);
-        // console.log("worlwidth",worldWidth - playerWidth);
-        // console.log("playerx",player2.x);
-        // console.log("math", Math.min(worldWidth - playerWidth, player2.x));
        const midPoint = (player1.x + player2.x) / 2; // titik tengah dua player                        
 
         const maxCameraX = this.repeatWidth - this.canvasWidth;
-        // Hitung targetCameraX — hanya geser jika midpoint keluar margin
-        const desiredCameraX = midPoint - canvasMid;      
-        // this.cameraX = Math.max(0, Math.min(maxCameraX, desiredCameraX));        
-        // this.cameraX = Math.max(0, Math.min(maxCameraX, desiredCameraX));;
+        const desiredCameraX = midPoint - canvasMid;          
         this.cameraX = cameraX;
-        const offset = this.cameraX;        
-        // console.log(desiredCameraX);
-
-        // player1.worldX = player1.worldX - offset;        
-        // player2.worldX = player2.worldX - offset;
+        const offset = this.cameraX;   
+                
+        if (!this.animationStopped) {
+            this.frameTimer += deltaTime;
+            if (this.frameTimer >= this.frameInterval) {
+                this.frameTimer = 0;
+                this.frameIndex = (this.frameIndex + 1) % this.frameCount;
+            }
+        }
     }
 
     draw(ctx, cameraX) {
-        const obst = this.obstacles[this.currentObstacle];
+        const obst = this.obstacles[this.currentObstacle];        
         ctx.save();
 
         const drawY = this.y;
@@ -750,67 +525,73 @@ export class obstacles{
                     obst.image.height * this.scale
                 );
             }
+            const box = this.getBoundingBox(cameraX);
+            ctx.strokeStyle = 'red';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(box.x, box.y, box.width, box.height);
+
         } else {
+            const frameWidth = obst.image.width / this.frameCount;                        
             ctx.drawImage(
                 obst.image,
-                this.x - this.cameraX,
-                drawY,
-                this.width * this.scale,
-                this.height * this.scale
+                this.frameIndex * frameWidth, 
+                0,                            
+                frameWidth,                    
+                obst.image.height,            
+                this.x - this.cameraX,        
+                drawY,                        
+                this.width * this.scale,       
+                this.height * this.scale       
             );
+            const box = this.getBoundingBox(cameraX);
+            ctx.strokeStyle = 'red';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(this.x - this.cameraX, drawY, this.width * this.scale, this.height * this.scale);
+
         }
 
-        // console.log("camerax", this.cameraX);
-        // console.log(this.x);
-        // console.log("thisx-camerax", this.x - this.cameraX);
-        // Untuk debugging bounding box
-        const box = this.getBoundingBox(cameraX);
-        ctx.strokeStyle = 'red';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(box.x, box.y, box.width, box.height);
-
+                
         ctx.restore();
     }
 
-    getBoundingBox(cameraX) {        
-        // console.log("getboundingbox", cameraX);
-        return {
-            x: this.x,
-            y: this.y + 15,
-            width: this.width,
-            height: this.height * this.scale - 21
-        };
+    getBoundingBox(cameraX) {                
+        if (this.repeatX){
+            return {
+                x: this.x,
+                y: this.y + 15,
+                width: this.width,
+                height: this.height * this.scale - 21
+            };
+        } else {
+            const frameWidth = this.width * this.scale;
+            const frameHeight = this.height * this.scale;
+
+            return {
+                x: this.x + 15,
+                y: this.y + 15,
+                width: frameWidth - 30,
+                height: frameHeight - 30
+            };
+        }   
+    }
+
+    setAnimationFrame(frameIndex) {
+        this.frameIndex = frameIndex;
+        this.frameTimer = 0;
+        this.animationStopped = true; // stop automatic animation update
     }
 
 }
 
-const longGround = createAnimations("./assets/images", [
+export const longGround = createAnimations("./assets/images", [
     { name: "longGround", file: "longGround.png", frames: 1 }]);
-const box = createAnimations("./assets/images", [
+export const box = createAnimations("./assets/images", [
     { name: "box", file: "box.png", frames: 1 }]);
+export const lever = createAnimations("./assets/images", [
+    { name: "lever", file: "lever.png", frames: 2}]);
+export const egg = createAnimations("./assets/images/vita", [
+    { name: "egg", file: "egg-1.png", frames: 1}]);
 
-export const Ground = new obstacles({
-    x: 0,
-    y: 565,
-    width: 2952,
-    height: 121,
-    type: 'static',
-    scale: 0.5,
-    obstacles: longGround,
-    repeatX: true,
-    repeatWidth: 3000
-});
-
-export const Box = new obstacles({
-    x: 700,
-    y: 380,
-    width: 184,
-    height: 107,
-    type: 'static',
-    scale: 1,
-    obstacles: box,  
-    currentObstacle: "box"      
-});
 // BUTTONS //
 export class Buttons{
     constructor(imageSrc, x, y, width, height, scale, onClick=null, active = null){
@@ -888,6 +669,7 @@ export const buttons = {
     buttonD: new Buttons("assets/images/buttons/arrow-d.png", 350, 400, 125, 164, 0.5, true, true),    
     buttonLeft: new Buttons("assets/images/buttons/arrow-left.png", 890, 400, 125, 164, 0.5, true, true),    
     buttonRight: new Buttons("assets/images/buttons/arrow-right.png", 1050, 400, 125, 164, 0.5, true, true),    
+    buttonPause: new Buttons("assets/images/buttons/pause.png", 1250, 50, 69, 70, 0.5, true, true),
     buttonLevels: []    
 };
     
@@ -904,7 +686,7 @@ for (let i=1; i<9; i++){
             141,
             132,
             0.5,
-            () => console.log("Button 1"),
+            () => w("Button 1"),
             true
         )
     )

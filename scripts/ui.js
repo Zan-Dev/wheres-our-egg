@@ -28,7 +28,7 @@ export function mainMenu(ctx){
     ctx.fillStyle = "#ffffff";
     ctx.font = "30px 'Press Start 2P'";
     ctx.textAlign = "center";
-    ctx.fillText("WHERE'S OUR EGGS ?", ctx.canvas.width / 2, 300);
+    ctx.fillText("WHERE'S OUR EGG ?", ctx.canvas.width / 2, 300);
 
     const opacity = 0.5 + Math.sin(time) * 0.5;
     ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;

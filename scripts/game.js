@@ -13,11 +13,14 @@ import { levelHandlers } from "./levels/indexLevel.js";
 let isMouseDown = true;
 let canvas, ctx;
 let gameState = "menu";
+export let isPaused = false;
+export let previousLevelState = "menu";
 export const keys = {};
 export const mouse = {
-  x: 0,
-  y: 0,
-  down: false
+    x: 0,
+    y: 0,
+    down: false,
+    clicked: false
 };
 
 export function initInput(canvas) {
@@ -31,6 +34,11 @@ export function initInput(canvas) {
 
   canvas.addEventListener('mouseup', (e) => {
     mouse.down = false;
+    mouse.clicked = true;
+  });
+
+  canvas.addEventListener('mousedown', (e) => {
+    mouse.down = true;
   });
 
   canvas.addEventListener('mousemove', (e) => {
@@ -75,7 +83,12 @@ const gameStateHandlers = {
         update: (ctx, canvas) => updateLevel(ctx, canvas),
         draw: levelSelect,    
         onClick: handleLevelClick        
-    },   
+    },  
+    pause: {
+        update: () => {},
+        draw: drawPauseScreen,
+        onClick: handlePauseClick
+    }, 
     ...Object.entries(levelHandlers).reduce((acc, [name, handler]) => {
         acc[name] = {
           update: (ctx) => handler.updateLevel(ctx) || (() => {}),
@@ -113,6 +126,36 @@ export function handleSkinClick(mouseX, mouseY) {
     if (getButtons("buttonNext").isMouseOver(mouseX,mouseY)) setGameState("level");
 }
 
+export function handlePauseClick(x, y) {    
+    setGameState(previousLevelState); 
+}
+
+export function togglePause() {
+    isPaused = !isPaused;
+    if (isPaused) {
+        setPreviousLevelState(gameState);
+        setGameState("pause");
+    } else {
+        setGameState(previousLevelState);
+    }
+}
+
+export function setPreviousLevelState(state) {
+    previousLevelState = state;
+}
+
+function drawPauseScreen(ctx) {
+    ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
+    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+    ctx.fillStyle = "white";
+    ctx.font = "30px 'Press Start 2P'";
+    ctx.textAlign = "center";
+    ctx.fillText("Paused", ctx.canvas.width / 2, ctx.canvas.height / 2 - 40);
+
+    ctx.font = "16px 'Press Start 2P'";
+    ctx.fillText("Click to resume", ctx.canvas.width / 2, ctx.canvas.height / 2 + 20);
+}
 
 export function initGame() {
     canvas = document.getElementById("board");
@@ -140,6 +183,7 @@ function draw(timestamp) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         handler.draw(ctx, timestamp);
     }
+    mouse.clicked = false;
 }
 
 export function gameLoop(timestamp) {
