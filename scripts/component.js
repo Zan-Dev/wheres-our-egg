@@ -317,9 +317,9 @@ export class Players {
         }
 
         if (this.facing === 'left') {            
-            ctx.strokeStyle = 'red';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(box.x - offsetX, box.y , box.width, box.height);
+            // ctx.strokeStyle = 'red';
+            // ctx.lineWidth = 2;
+            // ctx.strokeRect(box.x - offsetX, box.y , box.width, box.height);
             ctx.translate(this.worldX - offsetX + this.width, this.y - offsetY);
             ctx.scale(-1, 1);
             ctx.drawImage(
@@ -346,9 +346,9 @@ export class Players {
                 this.height
             );
         
-            ctx.strokeStyle = 'red';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(box.x - offsetX, box.y, box.width, box.height);
+            // ctx.strokeStyle = 'red';
+            // ctx.lineWidth = 2;
+            // ctx.strokeRect(box.x - offsetX, box.y, box.width, box.height);
         }
         
         ctx.restore();
@@ -383,6 +383,19 @@ export class Players {
                 height: this.height - 30
             };
         }
+    }
+
+    reset({ x, y, facing }) {
+        this.x = x;
+        this.y = y;
+        this.worldX = x;
+        this.velocityX = 0;
+        this.velocityY = 0;
+        this.facing = facing;
+        this.state = 'idle';
+        this.jumpCount = 0;
+        this.kick = false;
+        this.carryPressed = false;
     }
 }
 
@@ -526,9 +539,9 @@ export class Obstacles{
                 );
             }
             const box = this.getBoundingBox(cameraX);
-            ctx.strokeStyle = 'red';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(box.x, box.y, box.width, box.height);
+            // ctx.strokeStyle = 'red';
+            // ctx.lineWidth = 2;
+            // ctx.strokeRect(box.x, box.y, box.width, box.height);
 
         } else {
             const frameWidth = obst.image.width / this.frameCount;                        
@@ -544,9 +557,9 @@ export class Obstacles{
                 this.height * this.scale       
             );
             const box = this.getBoundingBox(cameraX);
-            ctx.strokeStyle = 'red';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(this.x - this.cameraX, drawY, this.width * this.scale, this.height * this.scale);
+            // ctx.strokeStyle = 'red';
+            // ctx.lineWidth = 2;
+            // ctx.strokeRect(this.x - this.cameraX, drawY, this.width * this.scale, this.height * this.scale);
 
         }
 
@@ -670,6 +683,7 @@ export const buttons = {
     buttonLeft: new Buttons("assets/images/buttons/arrow-left.png", 890, 400, 125, 164, 0.5, true, true),    
     buttonRight: new Buttons("assets/images/buttons/arrow-right.png", 1050, 400, 125, 164, 0.5, true, true),    
     buttonPause: new Buttons("assets/images/buttons/pause.png", 1250, 50, 69, 70, 0.5, true, true),
+    buttonResume: new Buttons("assets/images/buttons/resume.png", 627, 500, 69, 70, 0.5, true, true),
     buttonLevels: []    
 };
     

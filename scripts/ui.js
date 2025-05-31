@@ -36,6 +36,7 @@ export function mainMenu(ctx){
     ctx.fillText("press SPACE to start", ctx.canvas.width / 2, 350);
     time += 0.05;
 }
+
 export function updateMainMenu() { 
   if (InputKey("Space")) {
     setGameState("character");            

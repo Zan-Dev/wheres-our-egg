@@ -14,10 +14,15 @@ export class Timer {
 
     reset() {
         this.elapsedTime = 0;
+        console.log("reseted");
     }
     update(deltaTime) {
         if (this.running) {
-            this.elapsedTime += deltaTime;
+            this.elapsedTime += deltaTime;             
+        }
+        if (!this.running) {
+            console.log("Timer paused, no update");
+            return;
         }
     }
 
@@ -26,7 +31,7 @@ export class Timer {
         const minutes = Math.floor(totalSeconds / 60);
         const seconds = totalSeconds % 60;
         const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-        console.log(timeString);
+        // console.log(timeString);
         ctx.save();
         ctx.font = "25px 'Press Start 2P'";
         ctx.fillStyle = "white";
@@ -35,4 +40,7 @@ export class Timer {
         ctx.fillText(timeString, 100, 50);  // Fixed position at top-left corner
         ctx.restore();
     }
+    
 }
+
+export const gameTimer = new Timer();

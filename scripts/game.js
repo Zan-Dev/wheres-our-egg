@@ -9,10 +9,13 @@ import {
 import { buttons, getButtons } from "./component.js";
 import { levelStatus } from "./levelManager.js";
 import { levelHandlers } from "./levels/indexLevel.js";
+import { gameTimer } from "./timer.js";
+import { initLevel } from "./levels/level1.js";
 
 let isMouseDown = true;
 let canvas, ctx;
 let gameState = "menu";
+const resume = buttons.buttonResume;
 export let isPaused = false;
 export let previousLevelState = "menu";
 export const keys = {};
@@ -107,7 +110,11 @@ export function handleLevelClick(mouseX, mouseY) {
         if(levelStatus[i].unlocked){
         if (level.clicked) {
             buttons.buttonLevels[i].update(mouseX, mouseY, isMouseDown);
-            setGameState(`level${i + 1}`);               
+            setGameState(`level${i + 1}`);
+            if (i === 0) {  // level 1 button
+                initLevel();
+                console.log("clicked");
+            }
             console.log(`Level ${i + 1} clicked!`);        
         }
       }      
@@ -127,16 +134,22 @@ export function handleSkinClick(mouseX, mouseY) {
 }
 
 export function handlePauseClick(x, y) {    
-    setGameState(previousLevelState); 
+    isPaused = true;
+    setGameState(previousLevelState);        
 }
 
 export function togglePause() {
-    isPaused = !isPaused;
-    if (isPaused) {
+     if (!isPaused) {
         setPreviousLevelState(gameState);
         setGameState("pause");
+        gameTimer.pause();
+        console.log("Pause ON, isPaused:", isPaused);
+        isPaused = true;
     } else {
+        console.log("Pause OFF, isPaused:", isPaused);
+        isPaused = false;
         setGameState(previousLevelState);
+        gameTimer.start();
     }
 }
 
@@ -155,6 +168,14 @@ function drawPauseScreen(ctx) {
 
     ctx.font = "16px 'Press Start 2P'";
     ctx.fillText("Click to resume", ctx.canvas.width / 2, ctx.canvas.height / 2 + 20);
+    resume.draw(ctx);   
+
+    if (resume.isMouseOver(mouse.x, mouse.y) && mouse.clicked) {        
+        togglePause();
+        console.log("resume lah");     
+        mouse.clicked = false;  
+        return;          
+    }
 }
 
 export function initGame() {

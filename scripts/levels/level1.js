@@ -1,6 +1,6 @@
 import { Player1, Player2, Obstacles, longGround, box, lever, egg, buttons} from "../component.js";
-import { keys, mouse, previousLevelState, setPreviousLevelState, setGameState, togglePause, isPaused } from "../game.js";
-import { Timer } from "../timer.js";
+import { keys, mouse, previousLevelState, setPreviousLevelState, setGameState, togglePause, isPaused, InputKey } from "../game.js";
+import { gameTimer } from "../timer.js";
 
 let lastTime = 0;
 let levelWidth = 3000;
@@ -11,8 +11,61 @@ const pause = buttons.buttonPause;
 let gameOver = false;
 let finalTime = 0;
 
-export const gameTimer = new Timer();
-gameTimer.start();
+// export function initLevel() {
+//     lastTime = performance.now();     // ⬅️ Reset saat level dimulai
+//     gameTimer.reset();
+//     gameTimer.start();
+// }
+
+export function startTimer() {
+    gameTimer.reset();
+    gameTimer.start();
+}
+
+export function initLevel() {
+    lastTime = performance.now(); // Reset waktu
+    gameTimer.reset();            // Reset timer
+    gameTimer.start();            // Mulai timer
+    gameOver = false;
+    finalTime = 0;
+    Egg.x = 2500;                 // Reset posisi egg juga
+}
+
+export function resetLevel() {
+    Player1.reset({
+        x: 200, y: 400,
+        facing: 'right'
+    });
+    Player2.reset({
+        x: 300, y: 400,
+        facing: 'right'
+    });
+
+    Egg.x = 2500;
+    Egg.y = 515;
+    Egg.isCarried = false;
+    Egg.scale = 5;
+
+    Lever.isActive = false;
+    Lever.setAnimationFrame(0);
+
+    // Reset posisi box
+    Box.x = 700;
+    Box.y = 390;
+
+    Box2.x = 700;
+    Box2.y = 183;
+
+    // Reset properti lain jika ada
+    wasKicking = false;
+    wasCarrying = false;
+
+    gameOver = false;
+    finalTime = 0;
+    gameTimer.reset();
+    gameTimer.start();
+}
+
 
 
 const Lever = new Obstacles({
@@ -81,7 +134,12 @@ const Box2 = new Obstacles({
 const obstacles = [Egg, Lever, Box2, Box, Ground, Player1, Player2];
 
 export function drawLevel(ctx, timestamp){ 
+    console.log("Paused?", isPaused);
+
     if (gameOver) {
+        // gameOver = false;
+        gameTimer.pause();
+        gameTimer.reset();
         ctx.fillStyle = "rgba(0,0,0,0.7)";
         ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
@@ -117,12 +175,10 @@ export function drawLevel(ctx, timestamp){
         
         if (mouse.clicked &&
             mouse.x >= buttonX && mouse.x <= buttonX + buttonWidth &&
-            mouse.y >= buttonY && mouse.y <= buttonY + buttonHeight) {
+            mouse.y >= buttonY && mouse.y <= buttonY + buttonHeight) {           
             mouse.clicked = false;
-            gameOver = false;
-            finalTime = 0;
+            resetLevel();
             setGameState("level");
-            gameTimer.start();
         }
 
         return;
@@ -234,6 +290,7 @@ export function drawLevel(ctx, timestamp){
     Lever.update(deltaTime, Player1, Player2, offsetX);
     Egg.update(deltaTime, Player1, Player2, offsetX);
     gameTimer.update(deltaTime);
+    
 
     Player1.draw(ctx, offsetX);
     Player2.draw(ctx, offsetX);
@@ -245,8 +302,7 @@ export function drawLevel(ctx, timestamp){
         Egg.draw(ctx, offsetX);  
     }
 
-    gameTimer.draw(ctx, offsetX);
-    console.log(Egg.x)
+    gameTimer.draw(ctx, offsetX);    
 
     if (Egg.x >= 0 && Egg.x <= 50) {
         gameOver = true;
@@ -257,16 +313,17 @@ export function drawLevel(ctx, timestamp){
         gameTimer.reset();
     }
 
-    if (pause.isMouseOver(mouse.x, mouse.y) && mouse.clicked) {
+    if (pause.isMouseOver(mouse.x, mouse.y) && mouse.clicked) {        
         togglePause();
-       if (gameTimer.running) {
-            gameTimer.pause();  // berhentiin timer
-        } else {
-            gameTimer.start();  // mulai timer
-        }
+        // Remove timer start/pause logic here to let togglePause handle it
         console.log("toggle pause");
-        return;
+        mouse.clicked = false;  
+        return;          
     }
+    // if (InputKey("Space")) {
+    //     togglePause();
+    //     return;
+    // }
 }
 
 export function updateLevel(ctx){    
