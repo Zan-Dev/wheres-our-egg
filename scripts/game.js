@@ -10,6 +10,7 @@ import { buttons, getButtons } from "./component.js";
 import { levelStatus } from "./levelManager.js";
 import { levelHandlers } from "./levels/indexLevel.js";
 import { gameTimer } from "./timer.js";
+import { gameAudio } from "./audio.js";
 import { initLevel1, resetLevel as resetLevel1 } from "./levels/level1.js";
 import { initLevel2, resetLevel as resetLevel2 } from "./levels/level2.js";
 import { initLevel3, resetLevel as resetLevel3 } from "./levels/level3.js";
@@ -220,11 +221,13 @@ export function togglePause() {
         setGameState("pause");
         gameTimer.pause();
         console.log("Pause ON, isPaused:", isPaused);
+        gameAudio.pause();
         isPaused = true;
     } else {
         console.log("Pause OFF, isPaused:", isPaused);
         isPaused = false;
         setGameState(previousLevelState);
+         gameAudio.play(true);
         gameTimer.start();
     }
 }
@@ -250,6 +253,7 @@ function drawPauseScreen(ctx) {
         isPaused = false;
         setGameState(previousLevelState);
         gameTimer.start(); // Pastikan timer dilanjutkan
+        gameAudio.play(true);
         mouse.clicked = false;  
         return;          
     }

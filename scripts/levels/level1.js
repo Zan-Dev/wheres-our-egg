@@ -2,6 +2,7 @@ import { Player1, Player2, Obstacles, longGround, box, egg, buttons, tutorial} f
 import { keys, mouse, setGameState, togglePause, isPaused, InputKey } from "../game.js";
 import { gameTimer } from "../timer.js";
 import { unlockNextLevel } from "../levelManager.js";
+import { gameAudio } from "../audio.js";
 
 let lastTime = 0;
 let levelWidth = 3000;
@@ -29,6 +30,7 @@ export function initLevel1() {
     gameOver = false;
     finalTime = 0;
     Egg.x = 2500;                 // Reset posisi egg juga
+    gameAudio.play(true);
 }
 
 export function resetLevel() {
@@ -300,7 +302,7 @@ export function drawLevel(ctx, timestamp){
     if (pause.isMouseOver(mouse.x, mouse.y) && mouse.clicked) {        
         togglePause();
         // Remove timer start/pause logic here to let togglePause handle it
-        // console.log("toggle pause");
+        // console.log("toggle pause")        
         mouse.clicked = false;  
         return;          
     }

@@ -87,7 +87,7 @@ export const playerSkin = [
 ]  
 
 export class Players {
-    constructor(x, y, speed, animations) {
+    constructor(x, y, speed, animations, sounds = {}) {
         this.worldX = x;
         this.y = y;
         this.speed = speed;
@@ -98,6 +98,8 @@ export class Players {
         this.facing = 'right';
         this.width = 100;
         this.height = 100;
+
+        this.sounds = sounds;
 
         this.vy = 0;
         this.gravity = 0.5;
@@ -123,6 +125,21 @@ export class Players {
 
         this.isCrouchLocked = false;
         this.wantToStandUp = false;
+    }
+
+    playSound(soundName) {
+        if (this.sounds && this.sounds[soundName]) {
+            try {
+                const sound = this.sounds[soundName];
+                // Reset audio to beginning jika masih playing
+                sound.currentTime = 0;                
+                sound.play().catch(e => {
+                    console.warn(`Could not play sound ${soundName}:`, e);
+                });
+            } catch (error) {
+                console.warn(`Error playing sound ${soundName}:`, error);
+            }
+        }
     }
 
     checkCeilingCollision(obstacles) {
@@ -310,6 +327,7 @@ export class Players {
         if (this.kick) {
             this.kickTimer += deltaTime;
             this.setAnimation('kick');
+            this.playSound('kick');
             if (this.kickTimer >= this.kickDuration) {
                 this.kick = false;
                 this.idle = true;
@@ -320,6 +338,7 @@ export class Players {
         if (this.bite) {
             this.biteTimer += deltaTime;
             this.setAnimation('bite');
+            this.playSound('bite');
             if (this.biteTimer >= this.biteDuration) {
                 this.bite = false;
                 this.idle = true;
@@ -331,6 +350,7 @@ export class Players {
             this.vy = this.jumpStrength;
             this.onGround = false;
             this.setAnimation('jump');
+            this.playSound('jump');
         }
 
         if (keysJump && !this.isCrouchLocked) {
@@ -340,6 +360,7 @@ export class Players {
                 this.onGround = false;
                 this.setAnimation('jump');
                 this.jumpPressed = true;
+                this.playSound('jump');
             }
         } else {
             this.jumpPressed = false;
@@ -450,7 +471,7 @@ export class Players {
                         nextY = otherBox.y - currentBounds.height - (currentBounds.y - this.y);                       
                         this.vy = 0;
                         this.onGround = true;
-                        this.jumpCount = 0;
+                        this.jumpCount = 0;                        
                     } else if (this.vy < 0) {
                         // Hitting ceiling - hitung posisi Y berdasarkan bounding box
                         nextY = otherBox.y + otherBox.height - (currentBounds.y - this.y);
@@ -576,6 +597,15 @@ export class Players {
     }
 }
 
+const sounds = {
+    jump: new Audio('assets/sounds/jump.mp3'),
+    land: new Audio('assets/sounds/land.mp3'),
+    bite: new Audio('assets/sounds/eating.mp3'),    
+    kick: new Audio('assets/sounds/kick.mp3')
+};
+
+sounds.jump.volume = 0.1;
+sounds.bite.volume = 0.1;
 
 export function loadImage(src) {
     const img = new Image();
@@ -616,8 +646,8 @@ const vitaAnimations = createAnimations("./assets/images/vita", [
     { name: "carry", file: "carryingEgg.png", frames: 6, frameWidth: 24, frameHeight: 24}
 ]);
 
-export const Player1 = new Players(200, 400, 5, monoAnimations);
-export const Player2 = new Players(300, 400, 5, vitaAnimations);
+export const Player1 = new Players(200, 400, 5, monoAnimations, sounds);
+export const Player2 = new Players(300, 400, 5, vitaAnimations, sounds);
 
 // OBSTACLES
 // export class Obstacles{
