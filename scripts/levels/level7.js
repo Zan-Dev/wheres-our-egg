@@ -1,5 +1,5 @@
-import { Player1, Player2, Obstacles, longGround, box, egg, buttons, tutorial} from "../component.js";
-import { keys, mouse, setGameState, togglePause, isPaused, InputKey } from "../game.js";
+import { Player1, Player2, Obstacles, longGround, box, lever, egg, buttons} from "../component.js";
+import { keys, mouse, previousLevelState, setPreviousLevelState, setGameState, togglePause, isPaused, InputKey } from "../game.js";
 import { gameTimer } from "../timer.js";
 import { unlockNextLevel } from "../levelManager.js";
 
@@ -8,21 +8,22 @@ let levelWidth = 3000;
 let time = 0;
 let offsetX = 0;
 const pause = buttons.buttonPause;
-const jumpTutorial = tutorial.jumpTutorial;
-const teksJump = tutorial.teksJump;
-const teksWalk = tutorial.teksWalk;
-const teksPick = tutorial.teksPick;
-const teksPut = tutorial.teksPut;
 
 let gameOver = false;
 let finalTime = 0;
+
+// export function initLevel() {
+//     lastTime = performance.now();     // ⬅️ Reset saat level dimulai
+//     gameTimer.reset();
+//     gameTimer.start();
+// }
 
 export function startTimer() {
     gameTimer.reset();
     gameTimer.start();
 }
 
-export function initLevel1() {
+export function initLevel7() {
     lastTime = performance.now(); // Reset waktu
     gameTimer.reset();            // Reset timer
     gameTimer.start();            // Mulai timer
@@ -46,6 +47,9 @@ export function resetLevel() {
     Egg.isCarried = false;
     Egg.scale = 5;
 
+    Lever.isActive = false;
+    Lever.setAnimationFrame(0);
+
     // Reset posisi box
     Box.x = 700;
     Box.y = 390;
@@ -63,6 +67,22 @@ export function resetLevel() {
     gameTimer.start();
 }
 
+
+
+const Lever = new Obstacles({
+    x: 1200,
+    y: 525,
+    width: 184,
+    height: 107,
+    type: 'sprite',
+    scale: 0.4,
+    obstacles: lever,  
+    currentObstacle: "lever",
+    frameCount: 2,
+    frameInterval: 3000,
+    isActive: false, 
+});
+
 let wasKicking = false;
 let wasCarrying = false;
 
@@ -73,34 +93,16 @@ const Ground = new Obstacles({
     height: 121,
     type: 'static',
     scale: 0.5,
-    obstacles: longGround,    
-});
-
-const Ground2 = new Obstacles({
-    x: 1000,
-    y: 565,
-    width: 2952,
-    height: 121,
-    type: 'static',
-    scale: 0.5,
-    obstacles: longGround,    
-});
-
-const Ground3 = new Obstacles({
-    x: 2000,
-    y: 565,
-    width: 2952,
-    height: 121,
-    type: 'static',
-    scale: 0.5,
-    obstacles: longGround,    
+    obstacles: longGround,
+    repeatX: true,
+    repeatWidth: 3000
 });
 
 const Box = new Obstacles({
-    x: 2000,
-    y: 475,
+    x: 700,
+    y: 390,
     width: 184,
-    height: 90,
+    height: 107,
     type: 'static',
     scale: 1,
     obstacles: box,  
@@ -120,7 +122,7 @@ const Egg = new Obstacles({
 });
 
 const Box2 = new Obstacles({
-    x: 2000,
+    x: 700,
     y: 183,
     width: 184,
     height: 107,
@@ -130,16 +132,17 @@ const Box2 = new Obstacles({
     currentObstacle: "box"      
 });
 
-const obstacles = [Egg, Box2, Box, Ground, Ground2, Ground3, Player1, Player2];
+const obstacles = [Egg, Lever, Box2, Box, Ground, Player1, Player2];
 
 export function drawLevel(ctx, timestamp){ 
+    // console.log("Paused?", isPaused);
 
     if (gameOver) {
         // gameOver = false;
         gameTimer.pause();
         gameTimer.reset();
 
-        unlockNextLevel(0);
+        unlockNextLevel(6);
 
         ctx.fillStyle = "rgba(0,0,0,0.7)";
         ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
@@ -147,7 +150,7 @@ export function drawLevel(ctx, timestamp){
         ctx.fillStyle = "white";
         ctx.font = "40px 'Press Start 2P'";
         ctx.textAlign = "center";
-        ctx.fillText("Game Over!", ctx.canvas.width / 2, ctx.canvas.height / 2 - 60);
+        ctx.fillText("Game Selesai!", ctx.canvas.width / 2, ctx.canvas.height / 2 - 60);
 
 
         const totalSeconds = Math.floor(finalTime / 1000);
@@ -156,7 +159,7 @@ export function drawLevel(ctx, timestamp){
         const timeString = `${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}`;
 
         ctx.font = "30px 'Press Start 2P'";
-        ctx.fillText(`Your Time ${timeString}`, ctx.canvas.width / 2, ctx.canvas.height / 2);
+        ctx.fillText(`Waktu: ${timeString}`, ctx.canvas.width / 2, ctx.canvas.height / 2);
 
 
         const buttonX = ctx.canvas.width / 2 - 100;
@@ -172,7 +175,7 @@ export function drawLevel(ctx, timestamp){
 
         ctx.fillStyle = "white";
         ctx.font = "20px 'Press Start 2P'";
-        ctx.fillText("Next", ctx.canvas.width / 2, buttonY + 32);
+        ctx.fillText("Kembali ke Pilih Level", ctx.canvas.width / 2, buttonY + 32);
         
         if (mouse.clicked &&
             mouse.x >= buttonX && mouse.x <= buttonX + buttonWidth &&
@@ -195,9 +198,8 @@ export function drawLevel(ctx, timestamp){
     ctx.fillStyle = "white";
     ctx.font = "25px 'Press Start 2P'";
     ctx.textAlign = "center";
-    ctx.fillText("Level 1", ctx.canvas.width / 2, 70);
-    pause.draw(ctx);        
-    teksJump.draw(ctx);
+    ctx.fillText("Level 7", ctx.canvas.width / 2, 70);
+    pause.draw(ctx);
 
     const opacity = 0.5 + Math.sin(time) * 0.5;
     ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
@@ -215,6 +217,35 @@ export function drawLevel(ctx, timestamp){
             if (keys["KeyD"]) keys["KeyD"] = false;
         }
     }
+    
+    const leverObstacle = obstacles.find(o => o.currentObstacle === 'lever');    
+
+    if (leverObstacle) {
+        const playerBox = Player1.getBoundingBox();
+        const leverBox = leverObstacle.getBoundingBox(leverObstacle.cameraX); 
+
+        const horizontalDistance = Math.max(
+            leverBox.x - (playerBox.x + playerBox.width), // Player kiri → Lever kanan
+            playerBox.x - (leverBox.x + leverBox.width)   // Player kanan → Lever kiri
+        );
+
+        const verticalOverlap =
+            playerBox.y + playerBox.height > leverBox.y &&
+            playerBox.y < leverBox.y + leverBox.height;
+
+        const isNearLever = horizontalDistance <= 15 && verticalOverlap;
+        
+        if (Player1.kick && isNearLever && !wasKicking) {
+            leverObstacle.isActive = !leverObstacle.isActive;
+        }
+        wasKicking = Player1.kick;        
+        
+        if (leverObstacle.isActive) {
+            leverObstacle.setAnimationFrame(1); // Frame ke-2, lever aktif            
+        } else {
+            leverObstacle.setAnimationFrame(0); // Frame ke-1, lever nonaktif
+        }
+    }    
     
     if (Egg) {
         const playerBox = Player2.getBoundingBox();
@@ -253,46 +284,35 @@ export function drawLevel(ctx, timestamp){
 
     const midX = (Player1.getCenterX() + Player2.getCenterX()) / 2;
     offsetX = Math.max(0, Math.min(midX - ctx.canvas.width / 2, levelWidth - ctx.canvas.width));
-    
-    teksWalk.update();
-    jumpTutorial.update();
-    teksJump.update();
-    teksPick.update();
-    teksPut.update();
+
+
     Player1.update("player1", keys["KeyA"], keys["KeyD"], keys["KeyW"], keys["KeyQ"], keys["KeyX"], keys["KeyL"], deltaTime, obstacles, levelWidth);
     Player2.update("player2", keys["ArrowLeft"], keys["ArrowRight"], keys["ArrowUp"], keys["KeyO"], keys["ArrowDown"], keys["KeyP"], deltaTime, obstacles, levelWidth);           
     Ground.update(deltaTime, Player1, Player2, offsetX);  
-    Ground2.update(deltaTime, Player1, Player2, offsetX);  
-    Ground3.update(deltaTime, Player1, Player2, offsetX); 
     Box.update(deltaTime, Player1, Player2, offsetX);
     Box2.update(deltaTime, Player1, Player2, offsetX);
-    Egg.update(deltaTime, Player1, Player2, offsetX);        
+    Lever.update(deltaTime, Player1, Player2, offsetX);
+    Egg.update(deltaTime, Player1, Player2, offsetX);
     gameTimer.update(deltaTime);
     
-    teksPick.draw(ctx, offsetX);
-    teksWalk.draw(ctx, offsetX);
-    jumpTutorial.draw(ctx, offsetX);
-    teksJump.draw(ctx, offsetX);
-    teksPut.draw(ctx, offsetX);
 
     Player1.draw(ctx, offsetX);
     Player2.draw(ctx, offsetX);
     Ground.draw(ctx, offsetX); 
-    Ground2.draw(ctx, offsetX); 
-    Ground3.draw(ctx, offsetX); 
     Box.draw(ctx, offsetX);
     Box2.draw(ctx, offsetX);
+    Lever.draw(ctx, offsetX);  
     if (!Egg.isCarried) {
         Egg.draw(ctx, offsetX);  
     }
 
     gameTimer.draw(ctx, offsetX);    
 
-    if (Egg.x >= 0 && Egg.x <= 400) {
+    if (Egg.x >= 0 && Egg.x <= 50) {
         gameOver = true;
         finalTime = gameTimer.elapsedTime;
         gameTimer.pause();
-        console.log("Game Over! Your Time:", finalTime);
+        console.log("Game selesai! Waktu:", finalTime);
         Egg.x = 2500;
         gameTimer.reset();
     }

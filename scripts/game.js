@@ -10,7 +10,37 @@ import { buttons, getButtons } from "./component.js";
 import { levelStatus } from "./levelManager.js";
 import { levelHandlers } from "./levels/indexLevel.js";
 import { gameTimer } from "./timer.js";
-import { initLevel } from "./levels/level1.js";
+import { initLevel1, resetLevel as resetLevel1 } from "./levels/level1.js";
+import { initLevel2, resetLevel as resetLevel2 } from "./levels/level2.js";
+import { initLevel3, resetLevel as resetLevel3 } from "./levels/level3.js";
+import { initLevel4, resetLevel as resetLevel4 } from "./levels/level4.js";
+import { initLevel5, resetLevel as resetLevel5 } from "./levels/level5.js";
+import { initLevel6, resetLevel as resetLevel6 } from "./levels/level6.js";
+import { initLevel7, resetLevel as resetLevel7 } from "./levels/level7.js";
+import { initLevel8, resetLevel as resetLevel8 } from "./levels/level8.js";
+
+
+const levelInitializers = {
+  1: initLevel1,
+  2: initLevel2,
+  3: initLevel3,
+  4: initLevel4,
+  5: initLevel5,
+  6: initLevel6,
+  7: initLevel7,
+  8: initLevel8,
+};
+
+const levelResetters = {
+  1: resetLevel1,
+  2: resetLevel2,
+  3: resetLevel3,
+  4: resetLevel4,
+  5: resetLevel5,
+  6: resetLevel6,
+  7: resetLevel7,
+  8: resetLevel8,
+};
 
 let isMouseDown = true;
 let canvas, ctx;
@@ -102,22 +132,19 @@ const gameStateHandlers = {
 };
 
 export function handleLevelClick(mouseX, mouseY) {
-    for (let i = 0; i < buttons.buttonLevels.length; i++) {
+    for (let i = 0; i < buttons.buttonLevels.length; i++) {        
         if (!levelStatus[i].unlocked) continue;
         const level = buttons.buttonLevels[i];
-        level.update(mouseX, mouseY, true);
-
+        level.update(mouseX, mouseY, true);        
         if(levelStatus[i].unlocked){
-        if (level.clicked) {
-            buttons.buttonLevels[i].update(mouseX, mouseY, isMouseDown);
-            setGameState(`level${i + 1}`);
-            if (i === 0) {  // level 1 button
-                initLevel();
-                console.log("clicked");
+            if (level.clicked) {
+                buttons.buttonLevels[i].update(mouseX, mouseY, isMouseDown);
+                setGameState(`level${i + 1}`);                
+                levelInitializers[i+1]();
+                console.log("clicked");             
+                console.log(`Level ${i + 1} clicked!`);        
             }
-            console.log(`Level ${i + 1} clicked!`);        
-        }
-      }      
+        }      
     }
 }
 
@@ -134,8 +161,57 @@ export function handleSkinClick(mouseX, mouseY) {
 }
 
 export function handlePauseClick(x, y) {    
-    isPaused = true;
-    setGameState(previousLevelState);        
+    if (resume.isMouseOver(x, y)) {
+        isPaused = false;
+        setGameState(previousLevelState);        
+        gameTimer.start(); // Pastikan timer dilanjutkan
+        return;
+    }
+    
+    // Tombol Kembali ke Pilihan Level
+    const backButtonX = ctx.canvas.width / 2 - 150;
+    const backButtonY = ctx.canvas.height / 2 + 60;
+    const backButtonWidth = 120;
+    const backButtonHeight = 40;
+    
+    if (x >= backButtonX && x <= backButtonX + backButtonWidth &&
+        y >= backButtonY && y <= backButtonY + backButtonHeight) {
+        isPaused = false;
+        
+        // Reset level yang sedang aktif sebelum kembali ke menu
+        if (previousLevelState.startsWith('level')) {
+            const levelNumber = parseInt(previousLevelState.replace('level', ''));
+            if (levelResetters[levelNumber]) {
+                levelResetters[levelNumber](); // Reset posisi dan objek
+            }
+        }
+        
+        gameTimer.reset(); // Reset timer
+        setGameState("level");
+        return;
+    }
+    
+    // Tombol Restart
+    const restartButtonX = ctx.canvas.width / 2 + 30;
+    const restartButtonY = ctx.canvas.height / 2 + 60;
+    const restartButtonWidth = 120;
+    const restartButtonHeight = 40;
+    
+    if (x >= restartButtonX && x <= restartButtonX + restartButtonWidth &&
+        y >= restartButtonY && y <= restartButtonY + restartButtonHeight) {
+        isPaused = false;
+        
+        // Restart level yang sedang aktif
+        if (previousLevelState.startsWith('level')) {
+            const levelNumber = parseInt(previousLevelState.replace('level', ''));
+            if (levelResetters[levelNumber]) {
+                levelResetters[levelNumber](); // Panggil fungsi reset khusus
+            }
+        }
+        
+        setGameState(previousLevelState);
+        return;
+    }        
 }
 
 export function togglePause() {
@@ -158,23 +234,68 @@ export function setPreviousLevelState(state) {
 }
 
 function drawPauseScreen(ctx) {
-    ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
+    ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
     ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
+    // Title
     ctx.fillStyle = "white";
     ctx.font = "30px 'Press Start 2P'";
     ctx.textAlign = "center";
-    ctx.fillText("Paused", ctx.canvas.width / 2, ctx.canvas.height / 2 - 40);
+    ctx.fillText("Game Paused", ctx.canvas.width / 2, ctx.canvas.height / 2 - 80);
 
-    ctx.font = "16px 'Press Start 2P'";
-    ctx.fillText("Click to resume", ctx.canvas.width / 2, ctx.canvas.height / 2 + 20);
-    resume.draw(ctx);   
+    // Tombol Resume
+    resume.draw(ctx);
 
     if (resume.isMouseOver(mouse.x, mouse.y) && mouse.clicked) {        
-        togglePause();
-        console.log("resume lah");     
+        isPaused = false;
+        setGameState(previousLevelState);
+        gameTimer.start(); // Pastikan timer dilanjutkan
         mouse.clicked = false;  
         return;          
+    }
+
+    // Tombol Kembali ke Pilihan Level
+    const backButtonX = ctx.canvas.width / 2 - 150;
+    const backButtonY = ctx.canvas.height / 2 + 60;
+    const backButtonWidth = 160;
+    const backButtonHeight = 40;
+    
+    ctx.fillStyle = mouse.x >= backButtonX && mouse.x <= backButtonX + backButtonWidth &&
+                    mouse.y >= backButtonY && mouse.y <= backButtonY + backButtonHeight
+                    ? "#555" : "#333";
+    ctx.fillRect(backButtonX, backButtonY, backButtonWidth, backButtonHeight);
+    
+    ctx.strokeStyle = "white";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(backButtonX, backButtonY, backButtonWidth, backButtonHeight);
+    
+    ctx.fillStyle = "white";
+    ctx.font = "12px 'Press Start 2P'";
+    ctx.fillText("Select Level", backButtonX + backButtonWidth / 2, backButtonY + 25);
+
+    // Tombol Restart
+    const restartButtonX = ctx.canvas.width / 2 + 30;
+    const restartButtonY = ctx.canvas.height / 2 + 60;
+    const restartButtonWidth = 120;
+    const restartButtonHeight = 40;
+    
+    ctx.fillStyle = mouse.x >= restartButtonX && mouse.x <= restartButtonX + restartButtonWidth &&
+                    mouse.y >= restartButtonY && mouse.y <= restartButtonY + restartButtonHeight
+                    ? "#555" : "#333";
+    ctx.fillRect(restartButtonX, restartButtonY, restartButtonWidth, restartButtonHeight);
+    
+    ctx.strokeStyle = "white";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(restartButtonX, restartButtonY, restartButtonWidth, restartButtonHeight);
+    
+    ctx.fillStyle = "white";
+    ctx.font = "12px 'Press Start 2P'";
+    ctx.fillText("Restart", restartButtonX + restartButtonWidth / 2, restartButtonY + 25);
+
+    // Handle mouse clicks
+    if (mouse.clicked) {
+        handlePauseClick(mouse.x, mouse.y);
+        mouse.clicked = false;
     }
 }
 

@@ -5,23 +5,23 @@ export class Timer {
     }
     start() {
         this.running = true;
-        console.log("Timer started");
+        // console.log("Timer started");
     }
     pause() {
         this.running = false;
-        console.log("Timer paused");
+    //     console.log("Timer paused");
     }
 
     reset() {
         this.elapsedTime = 0;
-        console.log("reseted");
+        // console.log("reseted");
     }
     update(deltaTime) {
         if (this.running) {
             this.elapsedTime += deltaTime;             
         }
         if (!this.running) {
-            console.log("Timer paused, no update");
+            // console.log("Timer paused, no update");
             return;
         }
     }

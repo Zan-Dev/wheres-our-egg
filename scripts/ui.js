@@ -108,7 +108,7 @@ function loadSkins(ctx, deltaTime, timestamp) {
 
     ctx.fillStyle = "#fff";
     ctx.font = "30px 'Press Start 2P'";
-    ctx.fillText(player.skins[player.index].name, centerX, centerY - 120);
+    ctx.fillText(player.name, centerX, centerY - 120);
   });
 }
 
@@ -196,10 +196,9 @@ export function levelSelect(ctx){
 
     ctx.fillStyle = "#ffffff";
     ctx.font = "25px 'Press Start 2P'";
-    ctx.fillText("CHOOSE LEVEL", ctx.canvas.width / 2, 100);   
-
+    ctx.fillText("CHOOSE LEVEL", ctx.canvas.width / 2, 100);       
     for (let i=0; i<8; i++){
-      let level = buttons.buttonLevels[i];
+      let level = buttons.buttonLevels[i];      
       level.draw(ctx);
     }    
 }

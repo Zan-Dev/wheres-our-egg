@@ -59,7 +59,7 @@ export class Skins {
 
 export const playerSkin = [
     {
-        name: "player1",
+        name: "player 1",
         index: 0,
         animating: false,
         animationDir: null,
@@ -67,12 +67,12 @@ export const playerSkin = [
         x: 300,
         skins: [
             // 1:name, 2:src, 3:x, 4:y, 5:frameWidth, 6:frameHeight, 7:scaleWidth, 8:scaleHeight 8:frame, 9:100ms/frame, 10:flip            
-            new Skins("mono", "assets/images/mono/idle.png", 200, 200, 24, 24, 200, 200, 3, 100, false),    
-            new Skins("mono", "assets/images/mono/idle2.png", 200, 200, 24, 24, 200, 200, 3, 100, false),  
+            new Skins("Gray", "assets/images/mono/idle.png", 200, 200, 24, 24, 200, 200, 3, 100, false),    
+            new Skins("Orange", "assets/images/mono/idle.png", 200, 200, 24, 24, 200, 200, 3, 100, false),  
         ]   
     },
     {
-        name: "player2",
+        name: "player 2",
         index: 0,
         animating: false,
         animationDir: null,
@@ -80,8 +80,8 @@ export const playerSkin = [
         x: 1000,
         skins: [
             // 1:name, 2:src, 3:x, 4:y, 5:frameWidth, 6:frameHeight, 7:scaleWidth, 8:scaleHeight 8:frame, 9:100ms/frame, 10:flip
-            new Skins("vita", "assets/images/vita/idle.png", 900, 200, 24, 24, 200, 200, 3, 100, true),             
-            new Skins("vita", "assets/images/vita/idle2.png", 900, 200, 24, 24, 200, 200, 3, 100, true),   
+            new Skins("Green", "assets/images/vita/idle.png", 900, 200, 24, 24, 200, 200, 3, 100, true),             
+            new Skins("Red", "assets/images/vita/idle.png", 900, 200, 24, 24, 200, 200, 3, 100, true),   
         ]   
     }
 ]  
@@ -120,7 +120,38 @@ export class Players {
         this.carry = false;
         this.carryPressed = false;
         this.nearEgg = false;
+
+        this.isCrouchLocked = false;
+        this.wantToStandUp = false;
     }
+
+    checkCeilingCollision(obstacles) {
+        // Dapatkan bounding box jika karakter dalam posisi normal (berdiri)
+        const standingBox = {
+            x: this.worldX + 30,
+            y: this.y + 10,
+            width: this.width - 45,
+            height: this.height - 20
+        };
+
+        // Cek apakah bounding box standing akan bertabrakan dengan obstacle
+        for (let obj of obstacles) {
+            if (obj !== this) {
+                const otherBox = obj.getBoundingBox();
+                
+                if (
+                    standingBox.x < otherBox.x + otherBox.width &&
+                    standingBox.x + standingBox.width > otherBox.x &&
+                    standingBox.y < otherBox.y + otherBox.height &&
+                    standingBox.y + standingBox.height > otherBox.y
+                ) {
+                    return true; // Ada collision di atas
+                }
+            }
+        }
+        return false; // Aman untuk berdiri
+    }
+
 
     update(player, keysLeft, keysRight, keysJump, keysBite, keysSkill1, keysSkill2, deltaTime, obstacles, levelWidth) {
         let nextX = this.worldX;
@@ -137,50 +168,140 @@ export class Players {
             this.carryPressed = false;
         }      
 
+        const hasCeilingCollision = this.checkCeilingCollision(obstacles);
+
         if (keysSkill1) {
             if (player === "player1") {
                 this.kickTimer = 0;
                 this.kick = true;
                 this.idle = false;
             } else {
-                if (keysRight) {
-                    this.facing = 'right';
-                    this.setAnimation('crouch');
-                    nextX += this.speed;
-                } else if (keysLeft) {
-                    this.facing = 'left';
-                    this.setAnimation('crouch');
-                    nextX -= this.speed;
+                // Player 2 - Crouch logic dengan lock system
+                this.wantToStandUp = false; // Reset want to stand up
+                this.isCrouching = true;
+                
+                if (this.carry) {
+                    // Tetap dalam mode carry, tidak crouch
+                    if (keysRight) {
+                        this.facing = 'right';
+                        this.setAnimation('carry');
+                        nextX += this.speed;
+                    } else if (keysLeft) {
+                        this.facing = 'left';
+                        this.setAnimation('carry');
+                        nextX -= this.speed;
+                    } else {
+                        this.setAnimation('idleCarry');
+                    }
                 } else {
-                    this.setAnimation('crouchIdle');
+                    // Normal crouch behavior
+                    if (keysRight) {
+                        this.facing = 'right';
+                        this.setAnimation('crouch');
+                        nextX += this.speed;
+                    } else if (keysLeft) {
+                        this.facing = 'left';
+                        this.setAnimation('crouch');
+                        nextX -= this.speed;
+                    } else {
+                        this.setAnimation('crouchIdle');
+                    }
+                    
+                    // Set crouch lock jika ada collision di atas
+                    if (hasCeilingCollision) {
+                        this.isCrouchLocked = true;
+                    }
                 }
             }
-        } else if (this.carry) {            
-            if (keysRight) {
-                this.facing = 'right';
-                this.setAnimation('carry');
-                nextX += this.speed;
-            } else if (keysLeft) {
-                this.facing = 'left';
-                this.setAnimation('carry');
-                nextX -= this.speed;
+        } else {
+            // Ketika skill1 dilepas, player ingin berdiri
+            if (player === "player2") {
+                this.wantToStandUp = true;
+                this.isCrouching = false;
+                
+                // Cek apakah masih ada obstacle di atas
+                if (this.carry) {
+                    this.isCrouchLocked = false; // Reset crouch lock karena carry
+                    
+                    if (keysRight) {
+                        this.facing = 'right';
+                        this.setAnimation('carry');
+                        nextX += this.speed;
+                    } else if (keysLeft) {
+                        this.facing = 'left';
+                        this.setAnimation('carry');
+                        nextX -= this.speed;
+                    } else {
+                        this.setAnimation('idleCarry');
+                    }
+                } else {
+                    // Cek apakah masih ada obstacle di atas (hanya jika tidak carry)
+                    if (hasCeilingCollision) {
+                        // Masih ada obstacle di atas, tetap crouch
+                        this.isCrouchLocked = true;
+                        if (keysRight) {
+                            this.facing = 'right';
+                            this.setAnimation('crouch');
+                            nextX += this.speed;
+                        } else if (keysLeft) {
+                            this.facing = 'left';
+                            this.setAnimation('crouch');
+                            nextX -= this.speed;
+                        } else {
+                            this.setAnimation('crouchIdle');
+                        }
+                    } else {
+                        // Tidak ada obstacle di atas, bisa berdiri
+                        this.isCrouchLocked = false;
+                        
+                        // Normal movement
+                        if (keysBite) {
+                            this.biteTimer = 0;
+                            this.bite = true;
+                            this.idle = false;
+                        } else if (keysLeft) {
+                            this.facing = 'left';
+                            this.setAnimation('walk');
+                            nextX -= this.speed;
+                        } else if (keysRight) {
+                            this.facing = 'right';
+                            this.setAnimation('walk');
+                            nextX += this.speed;
+                        } else if (this.idle) {
+                            this.setAnimation('idle');
+                        }
+                    }
+                }
             } else {
-                this.setAnimation('idleCarry');
+                // Player 1 - normal movement (tidak berubah)
+                if (this.carry) {            
+                    if (keysRight) {
+                        this.facing = 'right';
+                        this.setAnimation('carry');
+                        nextX += this.speed;
+                    } else if (keysLeft) {
+                        this.facing = 'left';
+                        this.setAnimation('carry');
+                        nextX -= this.speed;
+                    } else {
+                        this.setAnimation('idleCarry');
+                    }
+                } else if (keysBite) {
+                    this.biteTimer = 0;
+                    this.bite = true;
+                    this.idle = false;
+                } else if (keysLeft) {
+                    this.facing = 'left';
+                    this.setAnimation('walk');
+                    nextX -= this.speed;
+                } else if (keysRight) {
+                    this.facing = 'right';
+                    this.setAnimation('walk');
+                    nextX += this.speed;
+                } else if (this.idle) {
+                    this.setAnimation('idle');
+                }
             }
-        } else if (keysBite) {
-            this.biteTimer = 0;
-            this.bite = true;
-            this.idle = false;
-        } else if (keysLeft) {
-            this.facing = 'left';
-            this.setAnimation('walk');
-            nextX -= this.speed;
-        } else if (keysRight) {
-            this.facing = 'right';
-            this.setAnimation('walk');
-            nextX += this.speed;
-        } else if (this.idle) {
-            this.setAnimation('idle');
         }        
 
         if (nextX < 0) nextX = 0;
@@ -206,13 +327,13 @@ export class Players {
             }
         }
 
-        if (keysJump && this.onGround) {
+        if (keysJump && this.onGround && !this.isCrouchLocked) {
             this.vy = this.jumpStrength;
             this.onGround = false;
             this.setAnimation('jump');
         }
 
-        if (keysJump) {
+        if (keysJump && !this.isCrouchLocked) {
             if (!this.jumpPressed && this.jumpCount < this.maxJump && player === "player1") {
                 this.vy = this.jumpStrength;
                 this.jumpCount++;
@@ -224,15 +345,39 @@ export class Players {
             this.jumpPressed = false;
         }
 
+        // for (let obj of obstacles) {
+        //     if (obj !== this) {
+        //         const otherBox = obj.getBoundingBox();
+        //         const nextBox = {
+        //             x: nextX,
+        //             y: this.y,
+        //             width: this.width,
+        //             height: this.height                    
+        //         };
+        //         if (
+        //             nextBox.x < otherBox.x + otherBox.width &&
+        //             nextBox.x + nextBox.width > otherBox.x &&
+        //             nextBox.y < otherBox.y + otherBox.height &&
+        //             nextBox.y + nextBox.height > otherBox.y
+        //         ) {
+        //             canMoveX = false;
+        //             break;
+        //         }                
+        //     }
+        // }
+
         for (let obj of obstacles) {
             if (obj !== this) {
                 const otherBox = obj.getBoundingBox();
+                // Gunakan bounding box yang sudah disesuaikan, bukan width/height tetap
+                const currentBounds = this.getBoundingBox();
                 const nextBox = {
-                    x: nextX,
-                    y: this.y,
-                    width: this.width,
-                    height: this.height                    
+                    x: nextX + (currentBounds.x - this.worldX), // Offset relatif dari worldX
+                    y: currentBounds.y,
+                    width: currentBounds.width,
+                    height: currentBounds.height                   
                 };
+                
                 if (
                     nextBox.x < otherBox.x + otherBox.width &&
                     nextBox.x + nextBox.width > otherBox.x &&
@@ -253,17 +398,47 @@ export class Players {
         this.vy += this.gravity;
         nextY = this.y + this.vy;
 
+        // for (let obj of obstacles) {
+        //     if (obj !== this) {
+        //         const otherBox = obj.getBoundingBox();
+        //         const currentBox = this.getBoundingBox();
+        //         const nextBoxY = {
+        //             x: this.worldX,
+        //             y: nextY,
+        //             // y: nextY + (currentBox.y - this.y),
+        //             width: this.width,
+        //             height: this.height
+        //         };
+        //         if (
+        //             nextBoxY.x < otherBox.x + otherBox.width &&
+        //             nextBoxY.x + nextBoxY.width > otherBox.x &&
+        //             nextBoxY.y < otherBox.y + otherBox.height &&
+        //             nextBoxY.y + nextBoxY.height > otherBox.y
+        //         ) {
+        //             if (this.vy > 0) {
+        //                 nextY = otherBox.y - this.height;                       
+        //                 this.vy = 0;
+        //                 this.onGround = true;
+        //                 this.jumpCount = 0;
+        //             } else if (this.vy < 0) {
+        //                 nextY = otherBox.y + otherBox.height;
+        //                 this.vy = 0;
+        //             }
+        //         }            
+        //     }
+        // }
+
         for (let obj of obstacles) {
             if (obj !== this) {
                 const otherBox = obj.getBoundingBox();
-                const currentBox = this.getBoundingBox();
+                const currentBounds = this.getBoundingBox();
                 const nextBoxY = {
-                    x: this.worldX,
-                    y: nextY,
-                    // y: nextY + (currentBox.y - this.y),
-                    width: this.width,
-                    height: this.height
+                    x: currentBounds.x,
+                    y: nextY + (currentBounds.y - this.y), // Offset relatif dari y
+                    width: currentBounds.width,
+                    height: currentBounds.height
                 };
+                
                 if (
                     nextBoxY.x < otherBox.x + otherBox.width &&
                     nextBoxY.x + nextBoxY.width > otherBox.x &&
@@ -271,12 +446,14 @@ export class Players {
                     nextBoxY.y + nextBoxY.height > otherBox.y
                 ) {
                     if (this.vy > 0) {
-                        nextY = otherBox.y - this.height;                       
+                        // Landing on top - hitung posisi Y berdasarkan bounding box
+                        nextY = otherBox.y - currentBounds.height - (currentBounds.y - this.y);                       
                         this.vy = 0;
                         this.onGround = true;
                         this.jumpCount = 0;
                     } else if (this.vy < 0) {
-                        nextY = otherBox.y + otherBox.height;
+                        // Hitting ceiling - hitung posisi Y berdasarkan bounding box
+                        nextY = otherBox.y + otherBox.height - (currentBounds.y - this.y);
                         this.vy = 0;
                     }
                 }            
@@ -362,9 +539,9 @@ export class Players {
         if (this.currentAnim === 'crouch' || this.currentAnim === 'crouchIdle') {
             return {
                 x: this.worldX + 30,
-                y: this.y + 60,
+                y: this.y + 30,
                 width: this.width - 45,
-                height: this.height - 60 
+                height: this.height - 40
             };
         } else if (this.currentAnim === 'carry' || this.currentAnim === 'idleCarry') {
             const anim = this.animations[this.currentAnim];
@@ -378,9 +555,9 @@ export class Players {
         else {
             return {
                 x: this.worldX + 30,
-                y: this.y + 15,
+                y: this.y + 10,
                 width: this.width - 45,
-                height: this.height - 30
+                height: this.height- 20
             };
         }
     }
@@ -400,13 +577,13 @@ export class Players {
 }
 
 
-function loadImage(src) {
+export function loadImage(src) {
     const img = new Image();
     img.src = src;
     return img;
 }
 
-function createAnimations(basePath, actions) {
+export function createAnimations(basePath, actions) {
     const anim = {};
     for (const action of actions) {
         anim[action.name] = {
@@ -443,11 +620,169 @@ export const Player1 = new Players(200, 400, 5, monoAnimations);
 export const Player2 = new Players(300, 400, 5, vitaAnimations);
 
 // OBSTACLES
+// export class Obstacles{
+//     constructor(options) {
+//         // Posisi dan ukuran
+//         this.x = options.x;
+//         this.y = options.y;
+//         this.originalX = options.originalX;
+//         this.originalY = options.originalY;
+//         this.initialX = options.x;
+//         this.initialY = options.y;
+//         this.width = options.width;
+//         this.height = options.height;
+//         this.scale = options.scale;
+//         this.repeatX = options.repeatX || false;
+//         this.repeatWidth = options.repeatWidth || this.width;
+        
+//         this.obstacles = options.obstacles;
+//         this.currentObstacle = options.currentObstacle || 'longGround';
+
+//         // Tipe: 'sprite' atau 'static'
+//         this.type = options.type; // 'sprite' | 'static'
+
+//         // Gambar (baik spritesheet atau gambar biasa)
+//         this.image = options.image;
+
+//         // Animasi jika type === 'sprite'
+//         this.frameCount = options.frameCount || 1;
+//         this.frameIndex = 0;
+//         this.frameTimer = 0;
+//         this.frameInterval = options.frameInterval || 100;
+   
+//         this.axis = options.axis || null;
+//         this.distance = options.distance || 0;
+//         this.speed = options.speed || 0;
+//         this.direction = 1;
+//         this.offset = 0;
+
+//         this.cameraX = 0;  // posisi scroll platform (offset)
+//         this.canvasWidth = options.canvasWidth || 3000;    
+        
+//         this.isCarried = options.isCarried || false;
+//     }
+
+//     update(deltaTime, player1, player2, cameraX) {
+
+//         if (this.axis === 'x') {
+//             this.offset += this.speed * deltaTime * this.direction;
+//             if (Math.abs(this.offset) >= this.distance) {
+//                 this.direction *= -1; // balik arah
+//             }
+//             this.x = this.initialX + this.offset;
+//         }
+        
+//         const worldWidth = this.canvasWidth;
+//         const playerWidth = player1.width || 50;
+//         // const canvasMid = this.canvasWidth / 2;        
+       
+//         player1.worldX = Math.max(0, Math.min(worldWidth - playerWidth, player1.worldX)); // posisi player 1
+//         player2.worldX = Math.max(0, Math.min(worldWidth - playerWidth, player2.worldX)); // posisi player 2  membandingkan nilai parameter 1 dan nilai parameter 2
+
+//     //    const midPoint = (player1.x + player2.x) / 2; // titik tengah dua player                        
+
+//         // const maxCameraX = this.repeatWidth - this.canvasWidth;
+//         // const desiredCameraX = midPoint - canvasMid;          
+//         this.cameraX = cameraX;
+//         // const offset = this.cameraX;   
+                
+//         if (!this.animationStopped) {
+//             this.frameTimer += deltaTime;
+//             if (this.frameTimer >= this.frameInterval) {
+//                 this.frameTimer = 0;
+//                 this.frameIndex = (this.frameIndex + 1) % this.frameCount;
+//             }
+//         }
+//     }
+
+//     draw(ctx, cameraX) {
+//         const obst = this.obstacles[this.currentObstacle];        
+//         ctx.save();
+//         ctx.imageSmoothingEnabled = false;
+
+//         const drawY = this.y;
+
+//         if (this.repeatX) {
+//             const imgWidth = obst.image.width * this.scale;
+//             const imgHeight = obst.image.height * this.scale;
+            
+//             let startX = this.x -(cameraX % imgWidth);
+//             const endX = this.canvasWidth + imgWidth;            
+
+//             for (let x = startX; x < endX; x += imgWidth) {
+//                 ctx.drawImage(
+//                     obst.image,
+//                     x,
+//                     drawY,
+//                     obst.image.width * this.scale,
+//                     obst.image.height * this.scale
+//                 );
+//             }
+//             const box = this.getBoundingBox(cameraX);
+//             // ctx.strokeStyle = 'red';
+//             // ctx.lineWidth = 2;
+//             // ctx.strokeRect(box.x, box.y, box.width, box.height);
+
+//         } else {
+//             const frameWidth = obst.image.width / this.frameCount;                        
+//             ctx.drawImage(
+//                 obst.image,
+//                 this.frameIndex * frameWidth, 
+//                 0,                            
+//                 frameWidth,                    
+//                 obst.image.height,            
+//                 this.x - this.cameraX,        
+//                 drawY,                        
+//                 this.width * this.scale,       
+//                 this.height * this.scale       
+//             );
+//             const box = this.getBoundingBox(cameraX);
+//             ctx.strokeStyle = 'red';
+//             ctx.lineWidth = 2;
+//             ctx.strokeRect(this.x - this.cameraX, drawY, this.width * this.scale, this.height * this.scale);
+
+//         }
+
+                
+//         ctx.restore();
+//     }
+
+//     getBoundingBox(cameraX) {                
+//         if (this.repeatX){
+//             return {
+//                 x: this.x,
+//                 y: this.y + 15,
+//                 width: this.width,
+//                 height: this.height * this.scale - 21
+//             };
+//         } else {
+//             const frameWidth = this.width * this.scale;
+//             const frameHeight = this.height * this.scale;
+
+//             return {
+//                 x: this.x + 15,
+//                 y: this.y + 15,
+//                 width: frameWidth - 30,
+//                 height: frameHeight - 30
+//             };
+//         }   
+//     }
+
+//     setAnimationFrame(frameIndex) {
+//         this.frameIndex = frameIndex;
+//         this.frameTimer = 0;
+//         this.animationStopped = true; // stop automatic animation update
+//     }
+
+// }
+
 export class Obstacles{
     constructor(options) {
         // Posisi dan ukuran
         this.x = options.x;
         this.y = options.y;
+        this.originalX = options.originalX;
+        this.originalY = options.originalY;
         this.initialX = options.x;
         this.initialY = options.y;
         this.width = options.width;
@@ -484,7 +819,7 @@ export class Obstacles{
     }
 
     update(deltaTime, player1, player2, cameraX) {
-
+        // Update posisi untuk moving platforms
         if (this.axis === 'x') {
             this.offset += this.speed * deltaTime * this.direction;
             if (Math.abs(this.offset) >= this.distance) {
@@ -500,7 +835,7 @@ export class Obstacles{
         player1.worldX = Math.max(0, Math.min(worldWidth - playerWidth, player1.worldX)); // posisi player 1
         player2.worldX = Math.max(0, Math.min(worldWidth - playerWidth, player2.worldX)); // posisi player 2  membandingkan nilai parameter 1 dan nilai parameter 2
 
-       const midPoint = (player1.x + player2.x) / 2; // titik tengah dua player                        
+        const midPoint = (player1.x + player2.x) / 2; // titik tengah dua player                        
 
         const maxCameraX = this.repeatWidth - this.canvasWidth;
         const desiredCameraX = midPoint - canvasMid;          
@@ -519,6 +854,7 @@ export class Obstacles{
     draw(ctx, cameraX) {
         const obst = this.obstacles[this.currentObstacle];        
         ctx.save();
+        ctx.imageSmoothingEnabled = false;
 
         const drawY = this.y;
 
@@ -526,7 +862,7 @@ export class Obstacles{
             const imgWidth = obst.image.width * this.scale;
             const imgHeight = obst.image.height * this.scale;
             
-            let startX = this.x -(cameraX % imgWidth);
+            let startX = this.x - (cameraX % imgWidth);
             const endX = this.canvasWidth + imgWidth;            
 
             for (let x = startX; x < endX; x += imgWidth) {
@@ -538,10 +874,12 @@ export class Obstacles{
                     obst.image.height * this.scale
                 );
             }
-            const box = this.getBoundingBox(cameraX);
+            
+            // Debug bounding box untuk repeatX
+            // const box = this.getBoundingBox();
             // ctx.strokeStyle = 'red';
             // ctx.lineWidth = 2;
-            // ctx.strokeRect(box.x, box.y, box.width, box.height);
+            // ctx.strokeRect(box.x - cameraX, box.y, box.width, box.height);
 
         } else {
             const frameWidth = obst.image.width / this.frameCount;                        
@@ -551,41 +889,55 @@ export class Obstacles{
                 0,                            
                 frameWidth,                    
                 obst.image.height,            
-                this.x - this.cameraX,        
+                this.x - cameraX,        // PERBAIKAN: Konsisten dengan getBoundingBox
                 drawY,                        
                 this.width * this.scale,       
                 this.height * this.scale       
             );
-            const box = this.getBoundingBox(cameraX);
+            
+            // Debug bounding box
+            const box = this.getBoundingBox();
             // ctx.strokeStyle = 'red';
             // ctx.lineWidth = 2;
-            // ctx.strokeRect(this.x - this.cameraX, drawY, this.width * this.scale, this.height * this.scale);
-
+            // ctx.strokeRect(box.x - cameraX, box.y, box.width, box.height);
         }
-
-                
+        
         ctx.restore();
     }
 
-    getBoundingBox(cameraX) {                
-        if (this.repeatX){
+    // PERBAIKAN UTAMA: getBoundingBox() yang konsisten
+    getBoundingBox() {                
+        if (this.repeatX) {
+            // Untuk background/ground yang repeat, gunakan area yang luas
             return {
                 x: this.x,
                 y: this.y + 15,
-                width: this.width,
+                width: this.repeatWidth, // Gunakan full repeat width
                 height: this.height * this.scale - 21
             };
         } else {
+            // Untuk obstacle biasa, posisi dunia yang sebenarnya (tanpa camera offset)
             const frameWidth = this.width * this.scale;
             const frameHeight = this.height * this.scale;
 
             return {
-                x: this.x + 15,
-                y: this.y + 15,
-                width: frameWidth - 30,
-                height: frameHeight - 30
+                x: this.x, // Posisi dunia sebenarnya
+                y: this.y,
+                width: frameWidth,
+                height: frameHeight
             };
         }   
+    }
+
+    // Method tambahan untuk mendapatkan bounding box dengan camera offset (untuk rendering)
+    getScreenBoundingBox(cameraX) {
+        const worldBox = this.getBoundingBox();
+        return {
+            x: worldBox.x - cameraX,
+            y: worldBox.y,
+            width: worldBox.width,
+            height: worldBox.height
+        };
     }
 
     setAnimationFrame(frameIndex) {
@@ -593,7 +945,6 @@ export class Obstacles{
         this.frameTimer = 0;
         this.animationStopped = true; // stop automatic animation update
     }
-
 }
 
 export const longGround = createAnimations("./assets/images", [
@@ -604,8 +955,20 @@ export const lever = createAnimations("./assets/images", [
     { name: "lever", file: "lever.png", frames: 2}]);
 export const egg = createAnimations("./assets/images/vita", [
     { name: "egg", file: "egg-1.png", frames: 1}]);
+export const grass1 = createAnimations("./assets/images", [
+    { name: "grass1", file: "grass-1.png", frames: 1}]);
+export const grass2 = createAnimations("./assets/images", [
+    { name: "grass2", file: "grass-2.png", frames: 1}]);
+export const bridge = createAnimations("./assets/images", [
+    { name: "bridge", file: "bridge.png", frames: 1}]);
+export const gate = createAnimations("./assets/images", [
+    { name: "gate", file: "gate.png", frames: 1}]);
+
 
 // BUTTONS //
+
+import { isLevelUnlocked, levelStatus } from "./levelManager.js";
+
 export class Buttons{
     constructor(imageSrc, x, y, width, height, scale, onClick=null, active = null){
         this.image = new Image();
@@ -692,16 +1055,108 @@ export function getButtons(name) {
 }
 
 for (let i=1; i<9; i++){   
+    const isUnlocked = isLevelUnlocked(i - 1);
+
     buttons.buttonLevels.push(        
         new Buttons(
-            `assets/images/buttons/levels/${i}.png`,
+            isUnlocked
+                ? `assets/images/buttons/levels/${i}-active.png`
+                : `assets/images/buttons/levels/${i}.png`,
             400 + ((i - 1) % 4) * 150,
             200 + Math.floor((i - 1) / 4) * 150,
             141,
             132,
             0.5,
-            () => w("Button 1"),
-            true
+            isUnlocked ? () => console.log(`Level ${i} clicked`) : null,
+            isUnlocked
         )
     )
 }
+
+export function refreshLevelButtons() {
+  buttons.buttonLevels = [];
+
+  for (let i = 1; i < 9; i++) {
+    const isUnlocked = levelStatus[i - 1].unlocked;  // ← gunakan levelStatus
+
+    const imageSrc = isUnlocked
+      ? `assets/images/buttons/levels/${i}-active.png`
+      : `assets/images/buttons/levels/${i}.png`;
+
+    buttons.buttonLevels.push(
+      new Buttons(
+        imageSrc,
+        400 + ((i - 1) % 4) * 150,
+        200 + Math.floor((i - 1) / 4) * 150,
+        141,
+        132,
+        0.5,
+        isUnlocked ? () => console.log("Level " + i + " clicked") : null,
+        isUnlocked
+      )
+    );
+  }
+}
+
+export class Tutorials{
+    constructor(imageSrc, x, y, width, height, scale, shouldBlink = false){
+        this.image = new Image();
+        this.image.src = imageSrc;
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+        this.scale = scale;
+
+        this.shouldBlink = shouldBlink;
+        this.blinkTimer = 0;
+        this.blinkSpeed = 60; // Durasi satu siklus
+        this.opacity = 1;
+
+    }
+
+    update() {
+        if (this.shouldBlink) {
+            this.blinkTimer++;            
+            const fadeValue = (Math.sin(this.blinkTimer * Math.PI / this.blinkSpeed) + 1) / 2;
+            this.opacity = 0.3 + (fadeValue * 0.7); // Range 0.3 - 1.0
+        }
+    }
+
+    draw(ctx, offsetX) {
+        ctx.save();
+        
+        if (this.shouldBlink) {
+            ctx.globalAlpha = this.opacity;
+        }
+        
+        ctx.drawImage(
+            this.image,
+            0,
+            0,
+            this.width,
+            this.height,
+            this.x - offsetX,
+            this.y,
+            this.width * this.scale,
+            this.height * this.scale
+        );
+
+        ctx.restore();
+    }
+}
+
+export const tutorial = {
+    // 1:src, 2:x, 3:y, 4:scale
+    teksWalk: new Tutorials("assets/images/tutorial/teks-walk.png", 400, 300, 1035, 100, 0.5, true),
+    jumpTutorial: new Tutorials("assets/images/tutorial/jump-tutorial.png", 1800, 370, 479, 391, 0.5, true),
+    highJumpTutorial: new Tutorials("assets/images/tutorial/highJump-tutorial.png", 640, 185, 224, 781, 0.5, true),
+    crouchTutorial: new Tutorials("assets/images/tutorial/crouch-tutorial.png", 640, 480, 508, 200, 0.5, true),
+    teksJump: new Tutorials("assets/images/tutorial/teks-jump.png", 1600, 300, 886, 100, 0.5, true),
+    teksPick: new Tutorials("assets/images/tutorial/teks-pick.png", 2300, 400, 1199, 50, 0.5, true),
+    teksPut: new Tutorials("assets/images/tutorial/teks-put.png", 100, 460, 517, 103, 0.5, true),
+    teksBite: new Tutorials("assets/images/tutorial/teks-bite.png", 2200, 400, 1171, 34, 0.5, true),
+    teksKick: new Tutorials("assets/images/tutorial/teks-kick.png", 1000, 480, 858, 34, 0.5, true),
+    teksHighJump: new Tutorials("assets/images/tutorial/teks-highJump.png", 200, 400, 855, 38, 0.5, true),
+    teksCrouch: new Tutorials("assets/images/tutorial/teks-crouch.png", 390, 420, 602, 38, 0.5, true)
+};
