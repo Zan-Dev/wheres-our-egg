@@ -1,5 +1,5 @@
 import { Player1, Player2, Obstacles, longGround, box, lever, egg, buttons, tutorial, bridge} from "../component.js";
-import { keys, mouse, setGameState, togglePause } from "../game.js";
+import { keys, mouse, setGameState, togglePause, toggleRestart } from "../game.js";
 import { gameTimer } from "../timer.js";
 import { unlockNextLevel } from "../levelManager.js";
 
@@ -9,7 +9,7 @@ let time = 0;
 let offsetX = 0;
 const pause = buttons.buttonPause;
 
-let gameOver = false;
+export let gameOver = false;
 let finalTime = 0;
 const crouchTutorial = tutorial.crouchTutorial;
 const teksCrouch = tutorial.teksCrouch;
@@ -59,10 +59,14 @@ export function resetLevel() {
         facing: 'right'
     });
 
+    Player2.carry = false;            // <- Reset state carry
+    Player2.carryPressed = false;     // <- Reset tombol
+    Player2.setAnimation('idle');
+
     Egg.x = 2500;
     Egg.y = 515;
     Egg.isCarried = false;
-    Egg.scale = 5;
+    Egg.scale = 5;        
 
     Lever.isActive = false;
     Lever.setAnimationFrame(0);
@@ -334,14 +338,13 @@ export function drawLevel(ctx, timestamp){
 
  
         if (Player2.carryPressed && !wasCarrying) {
-            if (!Egg.isCarried && isNearEgg) {
-   
+            if (!Egg.isCarried && isNearEgg) {                
                 Egg.isCarried = true;
                 Egg.scale = 0;     
                 Egg.y = 2000;     
             } else if (Egg.isCarried) {
               
-                Egg.isCarried = false;                
+                Egg.isCarried = false;                       
                 const eggOffsetX = Player2.facing === 'right' ? 87 : -30;
                 Egg.x = Player2.worldX + eggOffsetX;
                 Egg.y = Player2.y - Egg.height + 50;                
@@ -355,6 +358,28 @@ export function drawLevel(ctx, timestamp){
     const midX = (Player1.getCenterX() + Player2.getCenterX()) / 2;
     offsetX = Math.max(0, Math.min(midX - ctx.canvas.width / 2, levelWidth - ctx.canvas.width));
 
+    const longGrounds = [Ground, Ground2];
+    for (const ground of longGrounds) {
+        const groundBox = ground.getBoundingBox();
+        const groundBottom = groundBox.y + groundBox.height;
+
+        const player1Box = Player1.getBoundingBox();
+        const player1Bottom = player1Box.y + player1Box.height;
+
+        const player2Box = Player2.getBoundingBox();
+        const player2Bottom = player2Box.y + player2Box.height;
+
+        if (player1Bottom > groundBottom || player2Bottom > groundBottom) {
+            toggleRestart();
+            setGameState("gameOver");  
+            console.log("Game over");
+            gameOver = true;
+            // finalTime = gameTimer.elapsedTime;
+            // gameTimer.pause();
+            resetLevel();
+            break;
+        }
+    }
 
     Player1.update("player1", keys["KeyA"], keys["KeyD"], keys["KeyW"], keys["KeyQ"], keys["KeyX"], keys["KeyL"], deltaTime, obstacles, levelWidth);
     Player2.update("player2", keys["ArrowLeft"], keys["ArrowRight"], keys["ArrowUp"], keys["KeyO"], keys["ArrowDown"], keys["KeyP"], deltaTime, obstacles, levelWidth);           
@@ -392,6 +417,7 @@ export function drawLevel(ctx, timestamp){
         gameTimer.pause();
         console.log("Game selesai! Waktu:", finalTime);
         Egg.x = 2500;
+        Egg.isCarried = false;
         gameTimer.reset();
     }
 
@@ -401,11 +427,7 @@ export function drawLevel(ctx, timestamp){
         // console.log("toggle pause");
         mouse.clicked = false;  
         return;          
-    }
-    // if (InputKey("Space")) {
-    //     togglePause();
-    //     return;
-    // }
+    }   
 }
 
 export function updateLevel(ctx){    

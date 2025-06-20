@@ -59,6 +59,10 @@ export function resetLevel() {
         facing: 'right'
     });
 
+    Player2.carry = false;            // <- Reset state carry
+    Player2.carryPressed = false;     // <- Reset tombol
+    Player2.setAnimation('idle');
+
     Egg.x = 2500;
     Egg.y = 515;
     Egg.isCarried = false;
@@ -77,6 +81,14 @@ export function resetLevel() {
 
     Box3.x = 700;
     Box3.y = 475;
+
+    Grass1.x = 2500;
+    Grass1.y = 515;
+    Grass1.scale = 1;
+
+    Grass2.x = 2450;
+    Grass2.y = 515;
+    Grass2.scale = 1;
 
     // Clear semua animasi
     boxAnimations.clear();
@@ -493,6 +505,27 @@ export function drawLevel(ctx, timestamp){
     const midX = (Player1.getCenterX() + Player2.getCenterX()) / 2;
     offsetX = Math.max(0, Math.min(midX - ctx.canvas.width / 2, levelWidth - ctx.canvas.width));
 
+    const longGrounds = [Ground, Ground2, Ground3];
+        for (const ground of longGrounds) {
+            const groundBox = ground.getBoundingBox();
+            const groundBottom = groundBox.y + groundBox.height;
+    
+            const player1Box = Player1.getBoundingBox();
+            const player1Bottom = player1Box.y + player1Box.height;
+    
+            const player2Box = Player2.getBoundingBox();
+            const player2Bottom = player2Box.y + player2Box.height;
+    
+            if (player1Bottom > groundBottom || player2Bottom > groundBottom) {
+                setGameState("gameOver");  
+                console.log("Game over");
+                gameOver = true;
+                finalTime = gameTimer.elapsedTime;
+                gameTimer.pause();
+                resetLevel();
+                break;
+            }
+        }
 
     Player1.update("player1", keys["KeyA"], keys["KeyD"], keys["KeyW"], keys["KeyQ"], keys["KeyX"], keys["KeyL"], deltaTime, obstacles, levelWidth);
     Player2.update("player2", keys["ArrowLeft"], keys["ArrowRight"], keys["ArrowUp"], keys["KeyO"], keys["ArrowDown"], keys["KeyP"], deltaTime, obstacles, levelWidth);           

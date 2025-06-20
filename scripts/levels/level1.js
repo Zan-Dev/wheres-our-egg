@@ -42,6 +42,11 @@ export function resetLevel() {
         x: 300, y: 400,
         facing: 'right'
     });
+    gameAudio.play(true);
+
+    Player2.carry = false;            // <- Reset state carry
+    Player2.carryPressed = false;     // <- Reset tombol
+    Player2.setAnimation('idle');
 
     Egg.x = 2500;
     Egg.y = 515;
@@ -49,10 +54,10 @@ export function resetLevel() {
     Egg.scale = 5;
 
     // Reset posisi box
-    Box.x = 700;
-    Box.y = 390;
+    Box.x = 2000;
+    Box.y = 475;
 
-    Box2.x = 700;
+    Box2.x = 2000;
     Box2.y = 183;
 
     // Reset properti lain jika ada
@@ -187,6 +192,9 @@ export function drawLevel(ctx, timestamp){
         return;
     }
 
+    if (isPaused) {
+        lastTime = timestamp;
+    }
     const deltaTime = timestamp - lastTime;
     lastTime = timestamp;    
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
@@ -263,13 +271,39 @@ export function drawLevel(ctx, timestamp){
     teksPut.update();
     Player1.update("player1", keys["KeyA"], keys["KeyD"], keys["KeyW"], keys["KeyQ"], keys["KeyX"], keys["KeyL"], deltaTime, obstacles, levelWidth);
     Player2.update("player2", keys["ArrowLeft"], keys["ArrowRight"], keys["ArrowUp"], keys["KeyO"], keys["ArrowDown"], keys["KeyP"], deltaTime, obstacles, levelWidth);           
+
+    // Check if player falls below longGround bottom
+    const longGrounds = [Ground, Ground2, Ground3];
+    for (const ground of longGrounds) {
+        const groundBox = ground.getBoundingBox();
+        const groundBottom = groundBox.y + groundBox.height;
+
+        const player1Box = Player1.getBoundingBox();
+        const player1Bottom = player1Box.y + player1Box.height;
+
+        const player2Box = Player2.getBoundingBox();
+        const player2Bottom = player2Box.y + player2Box.height;
+
+        if (player1Bottom > groundBottom || player2Bottom > groundBottom) {
+            setGameState("gameOver");  
+            console.log("Game over");
+            gameOver = true;
+            finalTime = gameTimer.elapsedTime;
+            gameTimer.pause();
+            resetLevel();
+            break;
+        }
+    }
+
     Ground.update(deltaTime, Player1, Player2, offsetX);  
     Ground2.update(deltaTime, Player1, Player2, offsetX);  
     Ground3.update(deltaTime, Player1, Player2, offsetX); 
     Box.update(deltaTime, Player1, Player2, offsetX);
     Box2.update(deltaTime, Player1, Player2, offsetX);
     Egg.update(deltaTime, Player1, Player2, offsetX);        
-    gameTimer.update(deltaTime);
+    if (!isPaused) {
+        gameTimer.update(deltaTime);
+    }
     
     teksPick.draw(ctx, offsetX);
     teksWalk.draw(ctx, offsetX);
@@ -299,17 +333,14 @@ export function drawLevel(ctx, timestamp){
         gameTimer.reset();
     }
 
-    if (pause.isMouseOver(mouse.x, mouse.y) && mouse.clicked) {        
+    if (pause.isMouseOver(mouse.x, mouse.y) && mouse.clicked) {
+        mouse.clicked = false;        
+        gameTimer.running = false;
+        console.log(isPaused);
         togglePause();
-        // Remove timer start/pause logic here to let togglePause handle it
-        // console.log("toggle pause")        
-        mouse.clicked = false;  
-        return;          
-    }
-    // if (InputKey("Space")) {
-    //     togglePause();
-    //     return;
-    // }
+        return;
+    }    
+   
 }
 
 export function updateLevel(ctx){    

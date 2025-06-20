@@ -1,5 +1,5 @@
 import { Player1, Player2, Obstacles, longGround, box, gate, lever, egg, buttons, bridge} from "../component.js";
-import { keys, mouse, previousLevelState, setPreviousLevelState, setGameState, togglePause, isPaused, InputKey } from "../game.js";
+import { keys, mouse, previousLevelState, setPreviousLevelState, setGameState, togglePause, isPaused, InputKey, toggleRestart } from "../game.js";
 import { gameTimer } from "../timer.js";
 import { unlockNextLevel } from "../levelManager.js";
 
@@ -9,7 +9,7 @@ let time = 0;
 let offsetX = 0;
 const pause = buttons.buttonPause;
 
-let gameOver = false;
+export let gameOver = false;
 let gameOverReason = null;
 let finalTime = 0;
 
@@ -55,15 +55,14 @@ export function startTimer() {
     gameTimer.start();
 }
 
-export function initLevel4() {
-
+export function initLevel4() { 
     lastTime = performance.now();
     gameTimer.reset();
     gameTimer.start();
     gameOver = false;
     gameOverReason = null;
     finalTime = 0;
-    Egg.x = 2700;         
+    Egg.x = 2700;
 }
 
 export function resetLevel() {
@@ -76,8 +75,12 @@ export function resetLevel() {
         facing: 'right'
     });
 
+    Player2.carry = false;            // <- Reset state carry
+    Player2.carryPressed = false;     // <- Reset tombol
+    Player2.setAnimation('idle');
+
     Egg.x = 2700;
-    Egg.y = 515;
+    Egg.y = 324;
     Egg.isCarried = false;
     Egg.scale = 5;
 
@@ -85,11 +88,23 @@ export function resetLevel() {
     Lever.setAnimationFrame(0);
 
     // Reset posisi box
-    Box.x = 700;
+    Box.x = 1000;
     Box.y = 390;
 
-    Box2.x = 700;
+    Box2.x = 1000;
     Box2.y = 183;
+
+    Box3.x = 2300;
+    Box3.y = 390;
+
+    Box4.x = 2600;
+    Box4.y = 455;
+
+    Box5.x = 2300;
+    Box5.y = 290;
+
+    Box6.x = 2625;
+    Box6.y = 380;
 
     Gate.x = Gate.originalX;
     Gate.y = Gate.originalY || 20;
@@ -240,7 +255,7 @@ const Box6 = new Obstacles({
 });
 
 const Egg = new Obstacles({
-    x: 2850,
+    x: 2700,
     y: 324,
     width: 7,
     height: 10,
@@ -418,7 +433,29 @@ export function drawLevel(ctx, timestamp){
     const midX = (Player1.getCenterX() + Player2.getCenterX()) / 2;
     offsetX = Math.max(0, Math.min(midX - ctx.canvas.width / 2, levelWidth - ctx.canvas.width));
 
+    const longGrounds = [Ground, Ground2, Ground3];
+    for (const ground of longGrounds) {
+        const groundBox = ground.getBoundingBox();
+        const groundBottom = groundBox.y + groundBox.height;
 
+        const player1Box = Player1.getBoundingBox();
+        const player1Bottom = player1Box.y + player1Box.height;
+
+        const player2Box = Player2.getBoundingBox();
+        const player2Bottom = player2Box.y + player2Box.height;
+
+        if (player1Bottom > groundBottom || player2Bottom > groundBottom) {
+            toggleRestart();
+            setGameState("gameOver");  
+            console.log("Game over");
+            gameOver = true;
+            // finalTime = gameTimer.elapsedTime;
+            // gameTimer.pause();
+            resetLevel();
+            break;
+        }
+    }
+    
     Player1.update("player1", keys["KeyA"], keys["KeyD"], keys["KeyW"], keys["KeyQ"], keys["KeyX"], keys["KeyL"], deltaTime, obstacles, levelWidth);
     Player2.update("player2", keys["ArrowLeft"], keys["ArrowRight"], keys["ArrowUp"], keys["KeyO"], keys["ArrowDown"], keys["KeyP"], deltaTime, obstacles, levelWidth);           
     Gate.update(deltaTime, Player1, Player2, offsetX);          
@@ -464,7 +501,7 @@ export function drawLevel(ctx, timestamp){
         finalTime = gameTimer.elapsedTime;
         gameTimer.pause();
         console.log("Game selesai! Waktu:", finalTime);
-        Egg.x = 2500;
+        Egg.x = 2700;
         gameTimer.reset();
     }
 

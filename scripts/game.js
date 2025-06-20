@@ -5,6 +5,7 @@ import {
             levelSelect, updateLevel
 
         } from "./ui.js";
+import { drawGameOverScreen } from "./ui.js";
 
 import { buttons, getButtons } from "./component.js";
 import { levelStatus } from "./levelManager.js";
@@ -47,7 +48,9 @@ let isMouseDown = true;
 let canvas, ctx;
 let gameState = "menu";
 const resume = buttons.buttonResume;
+let gameLastTimestamp = 0;
 export let isPaused = false;
+export let isRestart = false;
 export let previousLevelState = "menu";
 export const keys = {};
 export const mouse = {
@@ -102,6 +105,33 @@ export function InputKey(code) {
     return false;
 }
 
+
+function handleGameOverClick(x, y) {
+    const canvas = document.getElementById("board");
+    const ctx = canvas.getContext("2d");
+
+    const restartButtonX = ctx.canvas.width / 2 - 100;
+    const restartButtonY = ctx.canvas.height / 2 + 50;;
+    const restartButtonWidth = 200;
+    const restartButtonHeight = 50;
+    
+    if (x >= restartButtonX && x <= restartButtonX + restartButtonWidth &&
+        y >= restartButtonY && y <= restartButtonY + restartButtonHeight) {
+        isPaused = false;
+        
+        // Restart level yang sedang aktif
+        if (previousLevelState.startsWith('level')) {
+            const levelNumber = parseInt(previousLevelState.replace('level', ''));
+            if (levelResetters[levelNumber]) {
+                levelResetters[levelNumber]();
+            }
+        }
+        
+        setGameState(previousLevelState);
+        return;
+    }        
+}
+
 const gameStateHandlers = {
     menu: {
         update: updateMainMenu,
@@ -123,6 +153,18 @@ const gameStateHandlers = {
         draw: drawPauseScreen,
         onClick: handlePauseClick
     }, 
+    gameOver: {
+        update: () => {},
+        draw: drawGameOverScreen,
+        onClick: handleGameOverClick
+    },
+    ...Object.entries(levelHandlers).reduce((acc, [name, handler]) => {
+        acc[name] = {
+          update: (ctx) => handler.updateLevel(ctx) || (() => {}),
+          draw: (ctx, deltaTime) => handler.drawLevel(ctx, deltaTime) || (() => {}),
+        };
+        return acc;
+      }, {}),  
     ...Object.entries(levelHandlers).reduce((acc, [name, handler]) => {
         acc[name] = {
           update: (ctx) => handler.updateLevel(ctx) || (() => {}),
@@ -131,6 +173,7 @@ const gameStateHandlers = {
         return acc;
       }, {}),  
 };
+
 
 export function handleLevelClick(mouseX, mouseY) {
     for (let i = 0; i < buttons.buttonLevels.length; i++) {        
@@ -162,10 +205,11 @@ export function handleSkinClick(mouseX, mouseY) {
 }
 
 export function handlePauseClick(x, y) {    
-    if (resume.isMouseOver(x, y)) {
-        isPaused = false;
-        setGameState(previousLevelState);        
-        gameTimer.start(); // Pastikan timer dilanjutkan
+    if (resume.isMouseOver(x, y) && mouse.clicked) {
+        gameTimer.running = true;        
+        isPaused = false;                
+        console.log("lah");
+        setGameState(previousLevelState);                              
         return;
     }
     
@@ -183,7 +227,7 @@ export function handlePauseClick(x, y) {
         if (previousLevelState.startsWith('level')) {
             const levelNumber = parseInt(previousLevelState.replace('level', ''));
             if (levelResetters[levelNumber]) {
-                levelResetters[levelNumber](); // Reset posisi dan objek
+                levelResetters[levelNumber]();
             }
         }
         
@@ -218,16 +262,30 @@ export function handlePauseClick(x, y) {
 export function togglePause() {
      if (!isPaused) {
         setPreviousLevelState(gameState);
-        setGameState("pause");
-        gameTimer.pause();
+        setGameState("pause");        
+        // gameTimer.update();
+        gameTimer.running = false;
+        isPaused = true;   
         console.log("Pause ON, isPaused:", isPaused);
-        gameAudio.pause();
-        isPaused = true;
+        gameAudio.pause();     
     } else {
-        console.log("Pause OFF, isPaused:", isPaused);
-        isPaused = false;
+
+    }
+}
+
+export function toggleRestart() {
+     if (!isRestart) {
+        setPreviousLevelState(gameState);
+        setGameState("gameOver");
+        gameTimer.pause();
+        console.log("Pause ON, isPaused:", isRestart);
+        gameAudio.pause();
+        isRestart = true;
+    } else {
+        // console.log("Pause OFF, isPaused:", isRestart);
+        isRestart = false;
         setGameState(previousLevelState);
-         gameAudio.play(true);
+        gameAudio.play(true);
         gameTimer.start();
     }
 }
@@ -237,6 +295,8 @@ export function setPreviousLevelState(state) {
 }
 
 function drawPauseScreen(ctx) {
+    gameTimer.running = false;
+    gameTimer.update();
     ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
     ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
@@ -244,20 +304,12 @@ function drawPauseScreen(ctx) {
     ctx.fillStyle = "white";
     ctx.font = "30px 'Press Start 2P'";
     ctx.textAlign = "center";
-    ctx.fillText("Game Paused", ctx.canvas.width / 2, ctx.canvas.height / 2 - 80);
+    ctx.fillText("Game Paused", ctx.canvas.width / 2, ctx.canvas.height / 2);
 
     // Tombol Resume
-    resume.draw(ctx);
-
-    if (resume.isMouseOver(mouse.x, mouse.y) && mouse.clicked) {        
-        isPaused = false;
-        setGameState(previousLevelState);
-        gameTimer.start(); // Pastikan timer dilanjutkan
-        gameAudio.play(true);
-        mouse.clicked = false;  
-        return;          
-    }
-
+    resume.x = ctx.canvas.width/2;
+    resume.draw(ctx);    
+    
     // Tombol Kembali ke Pilihan Level
     const backButtonX = ctx.canvas.width / 2 - 150;
     const backButtonY = ctx.canvas.height / 2 + 60;
@@ -295,12 +347,7 @@ function drawPauseScreen(ctx) {
     ctx.fillStyle = "white";
     ctx.font = "12px 'Press Start 2P'";
     ctx.fillText("Restart", restartButtonX + restartButtonWidth / 2, restartButtonY + 25);
-
-    // Handle mouse clicks
-    if (mouse.clicked) {
-        handlePauseClick(mouse.x, mouse.y);
-        mouse.clicked = false;
-    }
+    
 }
 
 export function initGame() {

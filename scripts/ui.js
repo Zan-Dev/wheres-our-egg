@@ -22,8 +22,13 @@ background.onload = () => {
 export function mainMenu(ctx){
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
-    ctx.fillStyle = "#041423";
-    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    if (backgroundLoaded) {
+      ctx.drawImage(background, 0, 0, ctx.canvas.width, ctx.canvas.height);
+    } else {
+      // Fallback jika gambar belum dimuat
+      ctx.fillStyle = "#000"; // warna default sementara
+      ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    }
 
     ctx.fillStyle = "#ffffff";
     ctx.font = "30px 'Press Start 2P'";
@@ -117,9 +122,14 @@ export function characterSelect(ctx, timestamp){
     lastTime = timestamp;    
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
-    ctx.fillStyle = "#041423";
-    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-
+    if (backgroundLoaded) {
+      ctx.drawImage(background, 0, 0, ctx.canvas.width, ctx.canvas.height);
+    } else {
+      // Fallback jika gambar belum dimuat
+      ctx.fillStyle = "#000"; // warna default sementara
+      ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    }
+ 
     ctx.fillStyle = "#ffffff";
     ctx.font = "25px 'Press Start 2P'";
     ctx.fillText("CHOOSE YOUR SKIN", ctx.canvas.width / 2, 100);   
@@ -174,7 +184,7 @@ function updateSkinAnimation(player, timestamp) {
 
 export function updateCharacter(ctx, canvas){   
   if (InputKey("Space")) {
-    setGameState("level");               
+    setGameState("character");               
   }
   if (InputKey("KeyD")){
     triggerNextSkin(0);    
@@ -205,4 +215,34 @@ export function levelSelect(ctx){
 
 export function updateLevel(){
   // Untuk Animasi
+}
+
+import { mouse } from "./game.js";
+
+// Game Over Display Function
+export function drawGameOverScreen(ctx, finalTime) {
+    ctx.fillStyle = "rgba(0,0,0,0.7)";
+    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+    ctx.fillStyle = "white";
+    ctx.font = "40px 'Press Start 2P'";
+    ctx.textAlign = "center";
+    ctx.fillText("Game Over!", ctx.canvas.width / 2, ctx.canvas.height / 2 - 60);
+
+    const buttonX = ctx.canvas.width / 2 - 100;
+    const buttonY = ctx.canvas.height / 2 + 50;
+    const buttonWidth = 200;
+    const buttonHeight = 50;
+
+
+    ctx.fillStyle = mouse.x >= buttonX && mouse.x <= buttonX + buttonWidth &&
+                    mouse.y >= buttonY && mouse.y <= buttonY + buttonHeight
+                    ? "#555" : "#333";
+    ctx.fillRect(buttonX, buttonY, buttonWidth, buttonHeight);
+
+    ctx.fillStyle = "white";
+    ctx.font = "20px 'Press Start 2P'";
+    ctx.fillText("Restart", ctx.canvas.width / 2, buttonY + 32);
+
+    // Note: Handling of mouse click for the buttons should be done in the caller function
 }
