@@ -8,6 +8,9 @@ let levelWidth = 4000;
 let time = 0;
 let offsetX = 0;
 const pause = buttons.buttonPause;
+const resume = buttons.buttonResume;
+
+let isLevelPaused = false;
 
 export let gameOver = false;
 let gameOverReason = null;
@@ -117,6 +120,7 @@ export function resetLevel() {
     wasCarrying = false;
 
     gameOver = false;
+    isLevelPaused = false;
     finalTime = 0;
     gameTimer.reset();
     gameTimer.start();
@@ -322,6 +326,85 @@ export function drawLevel(ctx, timestamp){
         return;
     }
 
+    if (isLevelPaused) {
+        lastTime = timestamp;
+
+        ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
+        ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+        ctx.fillStyle = "white";
+        ctx.font = "40px 'Press Start 2P'";
+        ctx.textAlign = "center";
+        ctx.fillText("Paused", ctx.canvas.width / 2, ctx.canvas.height / 2);        
+
+        resume.x = ctx.canvas.width / 2
+        resume.y = ctx.canvas.height / 2 + 150;
+        resume.draw(ctx);        
+
+        if (resume.isMouseOver(mouse.x, mouse.y) && mouse.clicked) {
+            mouse.clicked = false;
+            gameTimer.start();
+            lastTime = performance.now();
+            isLevelPaused = false;
+            console.log("Resumed from pause screen!");
+        }
+
+        const backButtonX = ctx.canvas.width / 2 - 150;
+        const backButtonY = ctx.canvas.height / 2 + 60;
+        const backButtonWidth = 160;
+        const backButtonHeight = 40;
+        
+        ctx.fillStyle = mouse.x >= backButtonX && mouse.x <= backButtonX + backButtonWidth &&
+                        mouse.y >= backButtonY && mouse.y <= backButtonY + backButtonHeight
+                        ? "#555" : "#333";
+        ctx.fillRect(backButtonX, backButtonY, backButtonWidth, backButtonHeight);
+        
+        ctx.strokeStyle = "white";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(backButtonX, backButtonY, backButtonWidth, backButtonHeight);
+        
+        ctx.fillStyle = "white";
+        ctx.font = "12px 'Press Start 2P'";
+        ctx.fillText("Select Level", backButtonX + backButtonWidth / 2, backButtonY + 25);        
+
+        if (mouse.clicked &&
+            mouse.x >= backButtonX && mouse.x <= backButtonX + backButtonWidth &&
+            mouse.y >= backButtonY && mouse.y <= backButtonY + backButtonHeight) {           
+            mouse.clicked = false;
+            resetLevel();
+            setGameState("level");
+        }
+
+        // Tombol Restart
+        const restartButtonX = ctx.canvas.width / 2 + 30;
+        const restartButtonY = ctx.canvas.height / 2 + 60;
+        const restartButtonWidth = 120;
+        const restartButtonHeight = 40;
+        
+        ctx.fillStyle = mouse.x >= restartButtonX && mouse.x <= restartButtonX + restartButtonWidth &&
+                        mouse.y >= restartButtonY && mouse.y <= restartButtonY + restartButtonHeight
+                        ? "#555" : "#333";
+        ctx.fillRect(restartButtonX, restartButtonY, restartButtonWidth, restartButtonHeight);
+        
+        ctx.strokeStyle = "white";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(restartButtonX, restartButtonY, restartButtonWidth, restartButtonHeight);
+        
+        ctx.fillStyle = "white";
+        ctx.font = "12px 'Press Start 2P'";
+        ctx.fillText("Restart", restartButtonX + restartButtonWidth / 2, restartButtonY + 25);        
+        
+        if (mouse.clicked &&
+            mouse.x >= restartButtonX && mouse.x <= restartButtonX + restartButtonWidth &&
+            mouse.y >= restartButtonY && mouse.y <= restartButtonY + restartButtonHeight) {
+            mouse.clicked = false;
+            console.log("Restart clicked");
+            resetLevel(); // ← inilah fungsinya
+        }
+
+        return;
+    }
+
     const deltaTime = timestamp - lastTime;
     lastTime = timestamp;    
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
@@ -505,17 +588,22 @@ export function drawLevel(ctx, timestamp){
         gameTimer.reset();
     }
 
-    if (pause.isMouseOver(mouse.x, mouse.y) && mouse.clicked) {        
-        togglePause();
-        // Remove timer start/pause logic here to let togglePause handle it
-        // console.log("toggle pause");
-        mouse.clicked = false;  
-        return;          
-    }
-    // if (InputKey("Space")) {
-    //     togglePause();
-    //     return;
-    // }
+    if (pause.isMouseOver(mouse.x, mouse.y) && mouse.clicked) {
+       mouse.clicked = false;
+       console.log("CLICK")
+
+        if (!isLevelPaused) {
+            gameTimer.pause();
+            isLevelPaused = true;
+            console.log("Paused!");
+        } else {
+            gameTimer.start();
+            lastTime = performance.now();
+            isLevelPaused = false;
+            console.log("Resumed!");
+        }
+        return;
+    }  
 }
 
 export function updateLevel(ctx){    
