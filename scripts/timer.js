@@ -9,7 +9,7 @@ export class Timer {
     }
     pause() {
         this.running = false;
-        console.log("Timer paused");
+        // console.log("Timer paused");
     }
 
     reset() {
@@ -18,11 +18,10 @@ export class Timer {
     }
     update(deltaTime) {
         if (this.running) {
-            this.elapsedTime += deltaTime;        
-            console.log(this.elapsedTime);
+            this.elapsedTime += deltaTime;                    
         }
         if (!this.running) {
-            console.log("Timer paused, no update");
+            // console.log("Timer paused, no update");
             return;
         }
     }

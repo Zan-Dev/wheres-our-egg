@@ -650,162 +650,6 @@ export const Player1 = new Players(200, 400, 5, monoAnimations, sounds);
 export const Player2 = new Players(300, 400, 5, vitaAnimations, sounds);
 
 // OBSTACLES
-// export class Obstacles{
-//     constructor(options) {
-//         // Posisi dan ukuran
-//         this.x = options.x;
-//         this.y = options.y;
-//         this.originalX = options.originalX;
-//         this.originalY = options.originalY;
-//         this.initialX = options.x;
-//         this.initialY = options.y;
-//         this.width = options.width;
-//         this.height = options.height;
-//         this.scale = options.scale;
-//         this.repeatX = options.repeatX || false;
-//         this.repeatWidth = options.repeatWidth || this.width;
-        
-//         this.obstacles = options.obstacles;
-//         this.currentObstacle = options.currentObstacle || 'longGround';
-
-//         // Tipe: 'sprite' atau 'static'
-//         this.type = options.type; // 'sprite' | 'static'
-
-//         // Gambar (baik spritesheet atau gambar biasa)
-//         this.image = options.image;
-
-//         // Animasi jika type === 'sprite'
-//         this.frameCount = options.frameCount || 1;
-//         this.frameIndex = 0;
-//         this.frameTimer = 0;
-//         this.frameInterval = options.frameInterval || 100;
-   
-//         this.axis = options.axis || null;
-//         this.distance = options.distance || 0;
-//         this.speed = options.speed || 0;
-//         this.direction = 1;
-//         this.offset = 0;
-
-//         this.cameraX = 0;  // posisi scroll platform (offset)
-//         this.canvasWidth = options.canvasWidth || 3000;    
-        
-//         this.isCarried = options.isCarried || false;
-//     }
-
-//     update(deltaTime, player1, player2, cameraX) {
-
-//         if (this.axis === 'x') {
-//             this.offset += this.speed * deltaTime * this.direction;
-//             if (Math.abs(this.offset) >= this.distance) {
-//                 this.direction *= -1; // balik arah
-//             }
-//             this.x = this.initialX + this.offset;
-//         }
-        
-//         const worldWidth = this.canvasWidth;
-//         const playerWidth = player1.width || 50;
-//         // const canvasMid = this.canvasWidth / 2;        
-       
-//         player1.worldX = Math.max(0, Math.min(worldWidth - playerWidth, player1.worldX)); // posisi player 1
-//         player2.worldX = Math.max(0, Math.min(worldWidth - playerWidth, player2.worldX)); // posisi player 2  membandingkan nilai parameter 1 dan nilai parameter 2
-
-//     //    const midPoint = (player1.x + player2.x) / 2; // titik tengah dua player                        
-
-//         // const maxCameraX = this.repeatWidth - this.canvasWidth;
-//         // const desiredCameraX = midPoint - canvasMid;          
-//         this.cameraX = cameraX;
-//         // const offset = this.cameraX;   
-                
-//         if (!this.animationStopped) {
-//             this.frameTimer += deltaTime;
-//             if (this.frameTimer >= this.frameInterval) {
-//                 this.frameTimer = 0;
-//                 this.frameIndex = (this.frameIndex + 1) % this.frameCount;
-//             }
-//         }
-//     }
-
-//     draw(ctx, cameraX) {
-//         const obst = this.obstacles[this.currentObstacle];        
-//         ctx.save();
-//         ctx.imageSmoothingEnabled = false;
-
-//         const drawY = this.y;
-
-//         if (this.repeatX) {
-//             const imgWidth = obst.image.width * this.scale;
-//             const imgHeight = obst.image.height * this.scale;
-            
-//             let startX = this.x -(cameraX % imgWidth);
-//             const endX = this.canvasWidth + imgWidth;            
-
-//             for (let x = startX; x < endX; x += imgWidth) {
-//                 ctx.drawImage(
-//                     obst.image,
-//                     x,
-//                     drawY,
-//                     obst.image.width * this.scale,
-//                     obst.image.height * this.scale
-//                 );
-//             }
-//             const box = this.getBoundingBox(cameraX);
-//             // ctx.strokeStyle = 'red';
-//             // ctx.lineWidth = 2;
-//             // ctx.strokeRect(box.x, box.y, box.width, box.height);
-
-//         } else {
-//             const frameWidth = obst.image.width / this.frameCount;                        
-//             ctx.drawImage(
-//                 obst.image,
-//                 this.frameIndex * frameWidth, 
-//                 0,                            
-//                 frameWidth,                    
-//                 obst.image.height,            
-//                 this.x - this.cameraX,        
-//                 drawY,                        
-//                 this.width * this.scale,       
-//                 this.height * this.scale       
-//             );
-//             const box = this.getBoundingBox(cameraX);
-//             ctx.strokeStyle = 'red';
-//             ctx.lineWidth = 2;
-//             ctx.strokeRect(this.x - this.cameraX, drawY, this.width * this.scale, this.height * this.scale);
-
-//         }
-
-                
-//         ctx.restore();
-//     }
-
-//     getBoundingBox(cameraX) {                
-//         if (this.repeatX){
-//             return {
-//                 x: this.x,
-//                 y: this.y + 15,
-//                 width: this.width,
-//                 height: this.height * this.scale - 21
-//             };
-//         } else {
-//             const frameWidth = this.width * this.scale;
-//             const frameHeight = this.height * this.scale;
-
-//             return {
-//                 x: this.x + 15,
-//                 y: this.y + 15,
-//                 width: frameWidth - 30,
-//                 height: frameHeight - 30
-//             };
-//         }   
-//     }
-
-//     setAnimationFrame(frameIndex) {
-//         this.frameIndex = frameIndex;
-//         this.frameTimer = 0;
-//         this.animationStopped = true; // stop automatic animation update
-//     }
-
-// }
-
 export class Obstacles{
     constructor(options) {
         // Posisi dan ukuran
@@ -846,6 +690,9 @@ export class Obstacles{
         this.canvasWidth = options.canvasWidth || 3000;    
         
         this.isCarried = options.isCarried || false;
+        this.isSlope = options.isSlope || false;
+        this.slopeType = options.slopeType || null; // 'left', 'right' atau null
+
     }
 
     update(deltaTime, player1, player2, cameraX) {
@@ -926,7 +773,7 @@ export class Obstacles{
             );
             
             // Debug bounding box
-            const box = this.getBoundingBox();
+            // const box = this.getBoundingBox();
             // ctx.strokeStyle = 'red';
             // ctx.lineWidth = 2;
             // ctx.strokeRect(box.x - cameraX, box.y, box.width, box.height);
@@ -945,19 +792,27 @@ export class Obstacles{
                 width: this.repeatWidth, // Gunakan full repeat width
                 height: this.height * this.scale - 21
             };
-        } else {
+        } else if (this.slopeType) {
+            // return {
+            //     x: this.x,
+            //     y: this.y + this.height * this.scale - 5,
+            //     width: this.width * this.scale,
+            //     height: 10
+            // };
+        }else {
             // Untuk obstacle biasa, posisi dunia yang sebenarnya (tanpa camera offset)
             const frameWidth = this.width * this.scale;
             const frameHeight = this.height * this.scale;
 
             return {
-                x: this.x, // Posisi dunia sebenarnya
+                x: this.x,
                 y: this.y,
                 width: frameWidth,
                 height: frameHeight
             };
         }   
     }
+    
 
     // Method tambahan untuk mendapatkan bounding box dengan camera offset (untuk rendering)
     getScreenBoundingBox(cameraX) {
@@ -975,6 +830,49 @@ export class Obstacles{
         this.frameTimer = 0;
         this.animationStopped = true; // stop automatic animation update
     }
+
+    handleSlopeCollision(player) {
+        if (!this.isSlope || !this.slopeDirection) return false;
+
+        const playerBox = player.getBoundingBox();
+        const playerCenterX = player.getCenterX();
+
+        const slopeX1 = this.x;
+        const slopeY1 = this.y;
+        const slopeX2 = this.x + this.width * this.scale;
+        const slopeY2 = this.slopeDirection === 'right'
+            ? this.y + this.height * this.scale
+            : this.y;
+
+        const slopeStartY = this.slopeDirection === 'right'
+            ? this.y
+            : this.y + this.height * this.scale;
+
+        const slopeEndY = this.slopeDirection === 'right'
+            ? this.y + this.height * this.scale
+            : this.y;
+
+        // Apakah centerX player di dalam rentang slope?
+        if (playerCenterX < slopeX1 || playerCenterX > slopeX2) return false;
+
+        // Interpolasi posisi Y pada slope berdasarkan posisi X
+        const t = (playerCenterX - slopeX1) / (slopeX2 - slopeX1);
+        const expectedY = slopeStartY + t * (slopeEndY - slopeStartY);
+
+        const playerFeetY = playerBox.y + playerBox.height;
+        const tolerance = 6;
+
+        if (playerFeetY >= expectedY - tolerance && playerFeetY <= expectedY + tolerance) {
+            // Posisi player sejajar dengan bidang miring
+            player.y = expectedY - playerBox.height;
+            player.velocityY = 0;
+            player.onGround = true;
+            return true;
+        }
+
+        return false;
+    }
+
 }
 
 export const longGround = createAnimations("./assets/images", [
@@ -993,6 +891,9 @@ export const bridge = createAnimations("./assets/images", [
     { name: "bridge", file: "bridge.png", frames: 1}]);
 export const gate = createAnimations("./assets/images", [
     { name: "gate", file: "gate.png", frames: 1}]);
+export const slope = createAnimations("./assets/images", [
+    { name: "slope", file: "slope.png", frames: 1}]);
+
 
 
 // BUTTONS //

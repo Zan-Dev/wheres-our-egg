@@ -11,7 +11,7 @@ export const levelStatus = Array.from({ length: 8 }, (_, index) => ({
 export function unlockNextLevel(currentLevel) {
     if (currentLevel + 1 < levelStatus.length) {
         levelStatus[currentLevel + 1].unlocked = true;
-        console.log(`level${currentLevel + 1}`,levelStatus[1].unlocked);
+        // console.log(`level${currentLevel + 1}`,levelStatus[1].unlocked);
         refreshLevelButtons();
     }
 }

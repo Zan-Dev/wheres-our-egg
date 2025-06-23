@@ -1,4 +1,4 @@
-import { Player1, Player2, Obstacles, longGround, box, gate, lever, egg, buttons, bridge} from "../component.js";
+import { Player1, Player2, Obstacles, longGround, box, gate, lever, egg, buttons, slope} from "../component.js";
 import { keys, mouse, previousLevelState, setPreviousLevelState, setGameState, togglePause, isPaused, InputKey, toggleRestart } from "../game.js";
 import { gameTimer } from "../timer.js";
 import { unlockNextLevel } from "../levelManager.js";
@@ -270,10 +270,70 @@ const Egg = new Obstacles({
     isCarried: false
 });
 
-const obstacles = [Egg, Lever, Box2, Box, Box3, Box4, Box5, Box6, Gate, Ground, Ground2, Ground3, Player1, Player2];
+const Slope = new Obstacles({
+    x: 1700,
+    y: 480,
+    width: 300,
+    height: 100,
+    scale: 1,
+    type: 'static',
+    obstacles: slope,
+    currentObstacle: 'slope',
+    isSlope: true,
+    slopeDirection: 'right'
+});
+
+
+const obstacles = [Egg, Lever, Box2, Box, Box3, Box4, Box5, Box6, Gate, Ground, Ground2, Ground3, Player1, Player2, Slope];
+// const slope = [Slope]
 
 export function drawLevel(ctx, timestamp){ 
     // console.log("Paused?", isPaused);
+
+    const soon = true;
+
+    if(soon){
+        gameTimer.pause();
+        gameTimer.reset();
+
+        unlockNextLevel(3);
+
+        ctx.fillStyle = "rgba(0,0,0,0.7)";
+        ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+        ctx.fillStyle = "white";
+        ctx.font = "40px 'Press Start 2P'";
+        ctx.textAlign = "center";
+        ctx.fillText("Coming Soon", ctx.canvas.width / 2, ctx.canvas.height / 2 - 60);       
+
+        const backButtonX = ctx.canvas.width / 2 - 80;
+        const backButtonY = ctx.canvas.height / 2 + 60;
+        const backButtonWidth = 160;
+        const backButtonHeight = 40;
+        
+        ctx.fillStyle = mouse.x >= backButtonX && mouse.x <= backButtonX + backButtonWidth &&
+                        mouse.y >= backButtonY && mouse.y <= backButtonY + backButtonHeight
+                        ? "#555" : "#333";
+        ctx.fillRect(backButtonX, backButtonY, backButtonWidth, backButtonHeight);
+        
+        ctx.strokeStyle = "white";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(backButtonX, backButtonY, backButtonWidth, backButtonHeight);
+        
+        ctx.fillStyle = "white";
+        ctx.font = "12px 'Press Start 2P'";
+        ctx.fillText("Select Level", backButtonX + backButtonWidth / 2, backButtonY + 25);        
+
+        if (mouse.clicked &&
+            mouse.x >= backButtonX && mouse.x <= backButtonX + backButtonWidth &&
+            mouse.y >= backButtonY && mouse.y <= backButtonY + backButtonHeight) {           
+            mouse.clicked = false;
+            resetLevel();
+            setGameState("level");
+        }
+
+        return;
+    }
 
     if (gameOver) {
         // gameOver = false;
@@ -570,7 +630,15 @@ export function drawLevel(ctx, timestamp){
     Box4.draw(ctx, offsetX);
     Box5.draw(ctx, offsetX);
     Box6.draw(ctx, offsetX);
-    Lever.draw(ctx, offsetX);  
+    Lever.draw(ctx, offsetX); 
+    Slope.draw(ctx, offsetX) ;
+
+    for (const obs of obstacles) {                
+        if (obs.slopeType) {            
+            obs.handleSlopeCollision(Player1);
+            obs.handleSlopeCollision(Player2);
+        }
+    }
     // Bridge.draw(ctx, offsetX);  
     // Bridge2.draw(ctx, offsetX);  
     if (!Egg.isCarried) {
